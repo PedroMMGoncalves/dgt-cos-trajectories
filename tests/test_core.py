@@ -120,8 +120,8 @@ def _run(project, **kw):
 def test_run_writes_all_outputs(project):
     res = _run(project)
     names = sorted(p.name for p in res.out_dir.iterdir())
-    assert names == ["data_dictionary.md", "group_summary.csv", "manifest.json", "run.log",
-                     "samples_cos_history.csv", "samples_cos_history.gpkg",
+    assert names == ["data_dictionary.md", "group_summary.csv", "interpretation_summary.csv", "manifest.json",
+                     "run.log", "samples_cos_history.csv", "samples_cos_history.gpkg",
                      "transitions_1995_2007.csv", "transitions_2007_2018.csv"]
 
 
@@ -179,16 +179,16 @@ def test_run_manifest(project):
     res = _run(project)
     m = json.loads((res.out_dir / "manifest.json").read_text(encoding="utf-8"))
     assert m["parameters"]["series"] == "S1"
-    assert len(m["series"]) == 1
-    s1 = m["series"][0]
-    assert s1["series"] == "S1" and s1["nomenclature"] == "S1-1995"
-    assert [c["edition"] for c in s1["cos_layers"]] == [1995, 2007, 2018]
-    assert all(len(c["sha256"]) == 64 for c in s1["cos_layers"])
+    assert m["series"] == "S1" and m["classes"] == "S1-1995"
+    assert [c["edition"] for c in m["cos_layers"]] == [1995, 2007, 2018]
+    assert all(len(c["sha256"]) == 64 and c["role"] == "trajectory" for c in m["cos_layers"])
+    assert "Anexo 3" in m["correspondences_applied"]["S1-2007->S1-1995"]
     assert m["samples"]["n_features"] == 5
     assert m["samples"]["crs"].startswith("EPSG:3763")
     assert {"python", "geopandas", "shapely", "fiona", "gdal", "pandas"} <= set(m["software"])
     assert m["counts"]["n_samples_out"] == 5
-    assert m["counts"]["by_series"]["S1"]["shared_edge_points"]["1995"] == 1
+    assert m["counts"]["shared_edge_points"]["1995"] == 1
+    assert sum(m["counts"]["interpretation"].values()) == 5
 
 
 def test_run_dictionary_opens_with_boundary_warning(project):
@@ -228,10 +228,26 @@ def test_run_refuses_existing_output_folder(project):
         _run(project)
 
 
-# --- linked S1 + S2 ------------------------------------------------------------
+# --- interpretation (single series) ---------------------------------------------
+
+def test_run_interpretation_column_and_summary(project):
+    res = _run(project)
+    h = pd.read_csv(res.out_dir / "samples_cos_history.csv", dtype=str, keep_default_na=False).set_index("SAMPLE_ID")
+    assert h.loc["A2", "interpretation"] == "stable"
+    assert h.loc["A10", "interpretation"] == "change"            # 30 m from the boundary
+    assert h.loc["B2", "interpretation"] == "near_boundary"      # on the shared edge, class changed
+    assert h.loc["C1", "interpretation"] == "insufficient_data"  # outside COS
+    assert h.columns[-1] == "interpretation"
+    s = pd.read_csv(res.out_dir / "interpretation_summary.csv").set_index("interpretation")
+    assert int(s["n_samples"].sum()) == 5 and s.loc["stable", "n_samples"] == 2
+    text = (res.out_dir / "data_dictionary.md").read_text(encoding="utf-8")
+    assert "## How to read the results" in text and "`series_difference`" in text
+
+
+# --- merged S1 + S2 ------------------------------------------------------------
 
 @pytest.fixture
-def linked(project):
+def merged(project):
     tmp, cos, samples = project
     sq = two_halves()
     write_cos(cos / "cos2018v4.gpkg", "cos2018v4", sq, ["5.1.1.1", "2.1.1.1"])
@@ -245,66 +261,70 @@ def _hist(res):
                        na_values=[""]).set_index("SAMPLE_ID")
 
 
-def test_linked_columns_are_suffixed_by_series(linked):
-    res = _run(linked, series="S1+S2")
-    h = _hist(res)
-    for col in ("cls_1995_S1", "cls_2018_S1", "cls_2018_S2", "cls_2025_S2", "poly_2018_S2",
-                "trajectory_S1", "trajectory_S2", "stable_S2", "near_boundary_S1", "pts_in_poly_2025_S2",
-                "agree_l1_2018"):
-        assert col in h.columns, col
-    assert not any(c in h.columns for c in ("trajectory", "stable", "cls_2018", "n_changes"))
-    assert h.columns[0] == "cls_1995_S1"
+def test_merged_single_trajectory_over_both_series(merged):
+    h = _hist(_run(merged, series="S1+S2"))
+    cols = list(h.columns)
+    assert [c for c in cols if c.startswith("cls_")] == ["cls_1995", "cls_2007", "cls_2018", "cls_2025",
+                                                         "cls_2018_S1"]
+    assert not any(c.endswith("_S2") for c in cols)
+    # left square: crops (S1 1995, 2007) -> cork oak forest (S2 2018) -> artificial (S2 2025)
+    assert h.loc["A10", "trajectory"] == "2.m1|2.m1|5.1.1.1|1"
+    assert h.loc["A10", "n_changes"] == "2" and h.loc["A10", "last_change_year"] == "2025"
+    assert h.loc["A10", "label_2025"] == "Territórios artificializados"
+    assert h.loc["A10", "poly_2018"] == "2018_1"
 
 
-def test_linked_metrics_stay_within_each_series(linked):
-    h = _hist(_run(linked, series="S1+S2"))
-    # A10, left square: S1 2.1.1.1|2.1.1.1|5.1.1.7 ; S2 5.1.1.1|1.1.1.1
-    assert h.loc["A10", "trajectory_S1"] == "2.1.1.1|2.1.1.1|5.1.1.7"
-    assert h.loc["A10", "trajectory_S2"] == "5.1.1.1|1.1.1.1"
-    assert h.loc["A10", "n_changes_S1"] == "1" and h.loc["A10", "n_changes_S2"] == "1"
-    # A2, right square: S1 pasture throughout, S2 crops throughout -> both stable
-    assert h.loc["A2", "stable_S1"] == "1" and h.loc["A2", "stable_S2"] == "1"
+def test_merged_series_check_uses_series1_map_of_junction_year(merged):
+    h = _hist(_run(merged, series="S1+S2"))
+    # right square: S1 2018 = pasture (3.1), S2 2018 = crops (2.m1)
+    assert h.loc["A2", "cls_2018_S1"] == "3.1" and h.loc["A2", "cls_2018"] == "2.m1"
+    assert h.loc["A2", "series_check_2018"] == "0"
+    assert pd.isna(h.loc["C1", "series_check_2018"])
 
 
-def test_linked_bridge_flag_compares_level1_in_shared_year(linked):
-    h = _hist(_run(linked, series="S1+S2"))
-    assert h.loc["A10", "agree_l1_2018"] == "1"   # 5.1.1.7 (S1) vs 5.1.1.1 (S2)
-    assert h.loc["A2", "agree_l1_2018"] == "0"    # 3.0.0.0 (S1) vs 2.1.1.1 (S2)
-    assert pd.isna(h.loc["C1", "agree_l1_2018"])  # outside COS
+def test_merged_interpretation(merged):
+    h = _hist(_run(merged, series="S1+S2"))
+    # A2: pasture in S1 up to and including 2018, crops in S2 2018 and 2025 -> only a series switch
+    assert h.loc["A2", "trajectory"] == "3.1|3.1|2.m1|2.m1"
+    assert h.loc["A2", "interpretation"] == "series_difference"
+    # A10: S1 itself shows a change by 2018 and S2 another by 2025
+    assert h.loc["A10", "interpretation"] == "change"
+    assert h.loc["B2", "interpretation"] == "near_boundary"
+    assert h.loc["C1", "interpretation"] == "insufficient_data"
 
 
-def test_linked_output_files(linked):
-    res = _run(linked, series="S1+S2")
+def test_merged_output_files_and_manifest(merged):
+    res = _run(merged, series="S1+S2")
     names = sorted(p.name for p in res.out_dir.iterdir())
-    assert names == ["bridge_2018_level1.csv", "data_dictionary.md", "group_summary.csv", "manifest.json",
+    assert names == ["data_dictionary.md", "group_summary.csv", "interpretation_summary.csv", "manifest.json",
                      "run.log", "samples_cos_history.csv", "samples_cos_history.gpkg",
-                     "transitions_S1_1995_2007.csv", "transitions_S1_2007_2018.csv",
-                     "transitions_S2_2018_2025.csv"]
-    b = pd.read_csv(res.out_dir / "bridge_2018_level1.csv", index_col=0, keep_default_na=False)
-    assert int(b.to_numpy().sum()) == 5
-    assert b.loc["3", "2"] == 2  # A2 and B1 in the right square
-
-
-def test_linked_group_summary_has_both_series(linked):
-    g = pd.read_csv(_run(linked, series="S1+S2").out_dir / "group_summary.csv").set_index("quad")
-    for col in ("n_points", "n_polygons_1995_S1", "n_polygons_2025_S2", "prop_changed_S1",
-                "prop_changed_S2", "prop_agree_l1_2018"):
-        assert col in g.columns, col
-    assert g.loc["A", "prop_agree_l1_2018"] == pytest.approx(0.5)
-
-
-def test_linked_manifest_and_dictionary(linked):
-    res = _run(linked, series="S1+S2")
+                     "transitions_1995_2007.csv", "transitions_2007_2018.csv", "transitions_2018_2025.csv"]
     m = json.loads((res.out_dir / "manifest.json").read_text(encoding="utf-8"))
-    assert [s["series"] for s in m["series"]] == ["S1", "S2"]
-    assert [c["edition"] for c in m["series"][1]["cos_layers"]] == [2018, 2025]
-    assert m["series"][1]["excluded_cos_layers"][0]["file"] == "COS2023v1-S2.gpkg"
-    assert m["counts"]["bridge"]["2018"] == {"compared": 4, "agree_l1": 2}
-    text = (res.out_dir / "data_dictionary.md").read_text(encoding="utf-8")
+    assert m["series"] == "S1+S2"
+    assert [(c["edition"], c["series"], c["role"]) for c in m["cos_layers"]] == [
+        (1995, "S1", "trajectory"), (2007, "S1", "trajectory"), (2018, "S2", "trajectory"),
+        (2025, "S2", "trajectory"), (2018, "S1", "series check")]
+    assert any(e["file"] == "COS2023v1-S2.gpkg" for e in m["excluded_cos_layers"])
+    assert m["counts"]["series_check"]["2018"] == {"compared": 4, "agree": 0}
+    assert "Anexo 3" in m["correspondences_applied"]["S1-2007<->S2-2025"]
+    g = pd.read_csv(res.out_dir / "group_summary.csv").set_index("quad")
+    assert g.loc["A", "prop_change_supported"] == pytest.approx(0.5)
+
+
+def test_merged_dictionary_explains_junction_and_classes(merged):
+    text = (_run(merged, series="S1+S2").out_dir / "data_dictionary.md").read_text(encoding="utf-8")
     assert "near_boundary" in text.split("\n\n")[1]
-    assert "not merged" in text and "agree_l1_2018" in text and "`cls_<year>_S1`" in text
+    assert "Junction between the series" in text and "merged classes" in text
+    assert "| 2.m1 |" in text and "S1-2007 codes" in text
 
 
-def test_linked_needs_two_editions_in_each_series(project):
+def test_merged_level_1_and_rejects_levels_2_3(merged):
+    h = _hist(_run(merged, series="S1+S2", level=1))
+    assert h.loc["A10", "trajectory"] == "2|2|5|1"
+    with pytest.raises(core.InputError, match="level"):
+        _run(merged, series="S1+S2", level=2, run_id="t2")
+
+
+def test_merged_needs_two_editions_in_each_series(project):
     with pytest.raises(core.InputError, match="two editions"):
         _run(project, series="S1+S2")

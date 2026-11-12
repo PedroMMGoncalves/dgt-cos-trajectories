@@ -21,8 +21,8 @@ def build_parser():
     )
     p.add_argument("--cos-dir", default=str(REPO_ROOT / "01_COS"),
                    help="folder with the unzipped COS GeoPackages (default: %(default)s)")
-    p.add_argument("--series", required=True, choices=["S1", "S2", core.LINKED],
-                   help="COS series; S1+S2 = both side by side, linked by sample ID, never merged")
+    p.add_argument("--series", required=True, choices=["S1", "S2", core.MERGED],
+                   help="COS series; S1+S2 = both series merged in one trajectory (merged classes)")
     p.add_argument("--samples", required=True, help="sample point layer (.shp or .gpkg)")
     p.add_argument("--samples-layer", default=None, help="layer name inside a GeoPackage")
     p.add_argument("--id-field", required=True, help="unique sample ID field")

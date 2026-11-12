@@ -10,8 +10,12 @@ follow the convention (e.g. COS conjuntural, ``COSc2020``) are ignored.
 
 Comparability rules:
 
-- Series 1 and Series 2 are never mixed (DGT: different nomenclature and
-  concepts).
+- ``S1`` and ``S2`` selections contain editions of one series only.
+- ``S1+S2`` (:func:`select_merged`) builds one trajectory from both series
+  in merged classes derived from the DGT correspondence between the Series 1
+  and Series 2 nomenclatures (DGT 2026, Anexo 3). DGT advises against
+  comparing series; changes at the junction between series are therefore
+  checked against the Series 1 map of the same year (see ``core``).
 - Editions flagged ``obsolete`` in the catalog are excluded (currently
   COS2023v1: DGT states that only COS2018v4 and COS2025v1 are comparable).
 - If the selected editions use different nomenclatures, all are recoded to a
@@ -85,6 +89,20 @@ class Selection:
                 f"{source.name}: class code {code!r} has no correspondence in "
                 f"crosswalk {nom}->{self.nomenclature}"
             ) from None
+
+    check = ()  # no cross-series check editions in a single-series selection
+
+    @property
+    def levels(self):
+        return tuple(range(1, self.max_level + 1))
+
+    def labels(self):
+        return load_labels(self.nomenclature)
+
+    def crosswalk_sources(self, catalog):
+        """``{crosswalk name: source}`` of the correspondence tables applied."""
+        return {f"{n}->{self.nomenclature}": catalog["crosswalks"][f"{n}->{self.nomenclature}"]["source"]
+                for n in self.crosswalks}
 
 
 def load_catalog(path=CATALOG_PATH):
@@ -201,3 +219,172 @@ def select(found, series, catalog=None):
     max_level = min([nom["levels"]] + [s.product["code_level"] for s in sources])
     return Selection(sources=sources, series=series, nomenclature=target, max_level=max_level,
                      crosswalks=crosswalks, excluded=excluded)
+
+
+MERGED = "S1+S2"
+
+
+@dataclass
+class MergedSelection:
+    """Series 1 and Series 2 in one trajectory, in merged classes.
+
+    ``sources`` are the editions of the trajectory: the Series 1 editions
+    older than the first Series 2 edition, followed by the Series 2
+    editions. ``check`` are the Series 1 editions of a year that also exists
+    in Series 2 (2018); they are not part of the trajectory and are used
+    only to detect differences between the two series for the same year.
+    """
+    sources: list
+    check: list
+    classes: dict  # (nomenclature, level-4 code) -> merged class code
+    class_labels: dict  # merged class code -> label
+    members: dict  # merged class code -> {nomenclature: [codes]}
+    level1_labels: dict
+    bridge_source: str
+    crosswalk_notes: dict
+    excluded: list = field(default_factory=list)
+    series: str = MERGED
+    nomenclature: str = "merged S1+S2 classes"
+    max_level: int = 4
+    levels: tuple = (1, 4)
+    crosswalks: dict = field(default_factory=dict)
+
+    @property
+    def years(self):
+        return [s.edition for s in self.sources]
+
+    def harmonise(self, code, source):
+        try:
+            return self.classes[(source.product["nomenclature"], code)]
+        except KeyError:
+            raise CatalogError(f"{source.name}: class code {code!r} is not in the merged class table") from None
+
+    def labels(self):
+        out = {(4, c): lab for c, lab in self.class_labels.items()}
+        out.update({(1, c): lab for c, lab in self.level1_labels.items()})
+        return out
+
+    def crosswalk_sources(self, catalog):
+        return dict(self.crosswalk_notes)
+
+
+def _common_prefix(codes):
+    parts = [c.split(".") for c in codes]
+    out = []
+    for elems in zip(*parts):
+        if len(set(elems)) != 1:
+            break
+        out.append(elems[0])
+    return out
+
+
+def merged_classes(noms_s1, crosswalks_s1, target_s1, bridge, nom_s2):
+    """Merged classes = connected components of the correspondence graph.
+
+    Nodes are the level-4 classes of every nomenclature involved; edges are
+    the Series 1 crosswalk (``crosswalks_s1``: nomenclature -> {code: code in
+    ``target_s1``}) and the Series 1 <-> Series 2 correspondence ``bridge``
+    ({code: [codes]}, from ``bridge["from"]`` to ``nom_s2``). Classes linked
+    directly or indirectly cannot be told apart in at least one edition and
+    form one merged class.
+
+    Returns ``(classes, labels, members)``. Naming of a merged class:
+    one Series 2 class -> its code and designation; all Series 2 classes
+    under a common prefix -> that prefix (a level 1-3 class); otherwise
+    ``<common prefix>.m<n>`` with the designations joined by `` + ``; no
+    Series 2 class -> ``<Series 1 code>(S1)``.
+    """
+    labels = {n: load_labels(n) for n in set(noms_s1) | {nom_s2, bridge["from"]}}
+    parent = {}
+
+    def find(x):
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for n in list(noms_s1) + [nom_s2]:
+        for (lvl, c) in labels[n]:
+            if lvl == 4:
+                find((n, c))
+    for n, cw in crosswalks_s1.items():
+        for c, t in cw.items():
+            parent[find((n, c))] = find((target_s1, t))
+    if bridge["from"] in noms_s1:
+        for c, targets in bridge["map"].items():
+            for t in targets:
+                parent[find((bridge["from"], c))] = find((nom_s2, t))
+    # A zero element in a Series 1 code (COS1995: 1.0.0.0, 3.0.0.0, 7.1.1.0) means "not subdivided":
+    # the class covers every Series 2 class under the same non-zero prefix, including Series 2
+    # classes that have no individual Series 1 counterpart.
+    s2_level4 = [c for (lvl, c) in labels[nom_s2] if lvl == 4]
+    for n in noms_s1:
+        for (lvl, c) in labels[n]:
+            parts = c.split(".")
+            if lvl == 4 and "0" in parts:
+                prefix = parts[:parts.index("0")]
+                for t in s2_level4:
+                    if t.split(".")[:len(prefix)] == prefix:
+                        parent[find((n, c))] = find((nom_s2, t))
+    groups = {}
+    for node in list(parent):
+        if node[0] in noms_s1 or node[0] == nom_s2:
+            groups.setdefault(find(node), []).append(node)
+    s2_all = sorted(c for (lvl, c) in labels[nom_s2] if lvl == 4)
+    named, counters = [], {}
+    for nodes in sorted(groups.values(), key=lambda g: sorted(g)):
+        s2 = sorted(c for n, c in nodes if n == nom_s2)
+        if not s2:
+            n0, c0 = sorted(nodes, key=lambda x: (x[0] != bridge["from"], x))[0]
+            code = f"{c0}(S1)"
+            label = f"{labels[n0][(4, c0)]} (Série 1; sem correspondência na Série 2)"
+        elif len(s2) == 1:
+            code, label = s2[0], labels[nom_s2][(4, s2[0])]
+        else:
+            prefix = _common_prefix(s2)
+            p = ".".join(prefix)
+            under = [c for c in s2_all if c.split(".")[:len(prefix)] == prefix]
+            if under == s2:
+                code, label = p, labels[nom_s2][(len(prefix), p)]
+            else:
+                counters[p] = counters.get(p, 0) + 1
+                code = f"{p}.m{counters[p]}"
+                label = " + ".join(labels[nom_s2][(4, c)] for c in s2)
+        named.append((code, label, nodes))
+    classes, class_labels, members = {}, {}, {}
+    for code, label, nodes in named:
+        class_labels[code] = label
+        members[code] = {}
+        for n, c in sorted(nodes):
+            classes[(n, c)] = code
+            members[code].setdefault(n, []).append(c)
+    return classes, class_labels, members
+
+
+def select_merged(found, catalog=None):
+    """Editions and merged classes for a single Series 1 + Series 2 trajectory."""
+    catalog = catalog or load_catalog()
+    s1 = select(found, "S1", catalog)
+    s2 = select(found, "S2", catalog)
+    noms_s1 = sorted({s.product["nomenclature"] for s in s1.sources})
+    bridge = next((b for b in catalog.get("bridges", {}).values()
+                   if b["from"] in noms_s1 and b["to"] == s2.nomenclature), None)
+    if bridge is None:
+        raise CatalogError(f"the catalog has no correspondence between {noms_s1} and {s2.nomenclature}; "
+                           "Series 1 and Series 2 cannot be merged")
+    classes, class_labels, members = merged_classes(noms_s1, s1.crosswalks, s1.nomenclature, bridge,
+                                                    s2.nomenclature)
+    first_s2 = min(s2.years)
+    sources = [s for s in s1.sources if s.edition < first_s2] + s2.sources
+    check = [s for s in s1.sources if s.edition in set(s2.years)]
+    dropped = [(s, f"later than the first Series 2 edition ({first_s2}) and not in a Series 2 year")
+               for s in s1.sources if s.edition >= first_s2 and s not in check]
+    notes = s1.crosswalk_sources(catalog)
+    notes[f"{bridge['from']}<->{bridge['to']}"] = bridge["source"]
+    l2 = load_labels(s2.nomenclature)
+    return MergedSelection(
+        sources=sources, check=check, classes=classes, class_labels=class_labels, members=members,
+        level1_labels={c: lab for (lvl, c), lab in l2.items() if lvl == 1},
+        bridge_source=bridge["source"], crosswalk_notes=notes,
+        excluded=s1.excluded + s2.excluded + dropped)

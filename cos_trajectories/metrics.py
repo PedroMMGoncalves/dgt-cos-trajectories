@@ -146,6 +146,64 @@ def group_summary(history, group_field, years):
         row["n_trajectories"] = d["trajectory"].nunique()
         nb = d["near_boundary"].dropna()
         row["prop_near_boundary"] = float(nb.mean()) if len(nb) else np.nan
+        if "interpretation" in d:
+            row["prop_change_supported"] = float((d["interpretation"] == "change").mean())
         rows.append(row)
     out = pd.DataFrame(rows)
     return out.sort_values(group_field, key=lambda s: s.map(natural_key)).reset_index(drop=True)
+
+
+
+INTERPRETATION = ("stable", "change", "near_boundary", "flip_flop", "series_difference", "insufficient_data")
+INTERPRETATION_MEANING = {
+    "stable": "Same class in every observed edition.",
+    "change": "Class changed; no artefact indicator applies. Change supported by the maps.",
+    "near_boundary": "Class changed, but the point is closer to a polygon boundary than the threshold in at "
+                     "least one edition: the change may be a difference in delineation.",
+    "flip_flop": "Class changed and returned (A-B-A) in consecutive editions: probable interpretation artefact.",
+    "series_difference": "The only change is at the junction between Series 1 and Series 2, and the Series 1 "
+                         "map of that year shows no change: difference between series, not land-use change.",
+    "insufficient_data": "Fewer than two editions with a class at the point.",
+}
+
+
+def interpret(classes, years, flip_flop, near_boundary, junction_year=None, check_class=None):
+    """Interpretation category of one sample (first rule that applies).
+
+    1. fewer than two observed editions -> ``insufficient_data``
+    2. no change -> ``stable``
+    3. every change is a *series-switch change* -> ``series_difference``.
+       A series-switch change is a change into the edition of
+       ``junction_year`` (first Series 2 edition) while the Series 1 map of
+       that year, ``check_class``, equals the class of the previous observed
+       edition: Series 1 alone shows no change over that interval.
+    4. A-B-A pattern -> ``flip_flop``
+    5. near a polygon boundary -> ``near_boundary``
+    6. otherwise -> ``change``
+    """
+    obs = [(y, str(c)) for y, c in zip(years, classes) if not _is_missing(c)]
+    if len(obs) < 2:
+        return "insufficient_data"
+    changes = [k for k in range(1, len(obs)) if obs[k][1] != obs[k - 1][1]]
+    if not changes:
+        return "stable"
+    if junction_year is not None and not _is_missing(check_class):
+        switch = [k for k in changes if obs[k][0] == junction_year and str(check_class) == obs[k - 1][1]]
+        if len(switch) == len(changes):
+            return "series_difference"
+    if flip_flop == 1:
+        return "flip_flop"
+    if near_boundary == 1:
+        return "near_boundary"
+    return "change"
+
+
+def interpret_table(history, years, junction_year=None, check_col=None):
+    """``interpret`` for every row of a history table that already has the metric columns."""
+    out = []
+    for r in history.to_dict("records"):
+        ff, nb = r["flip_flop"], r["near_boundary"]
+        out.append(interpret([r[f"cls_{y}"] for y in years], years,
+                             0 if pd.isna(ff) else int(ff), 0 if pd.isna(nb) else int(nb),
+                             junction_year, r[check_col] if check_col else None))
+    return pd.Series(out, index=history.index, dtype="object")

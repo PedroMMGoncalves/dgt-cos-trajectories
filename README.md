@@ -96,9 +96,9 @@ written to the data dictionary of each run.
 
 ### 2.4 Comparison level
 
-Let $h(c)$ be the harmonised level-4 code of a polygon. The class at comparison level
-$L \in \lbrace 1,2,3,4\rbrace $ is the truncation of the dotted code to its first $L$ elements,
-$c^{(L)} = \mathrm{trunc}_L(h(c))$, for example $\mathrm{trunc}_2(\texttt{2.3.1.1}) = \texttt{2.3}$.
+Let $`h(c)`$ be the harmonised level-4 code of a polygon. The class at comparison level
+$`L \in \lbrace 1,2,3,4 \rbrace`$ is the truncation of the dotted code to its first $`L`$ elements,
+$`c^{(L)} = \mathrm{trunc}_L(h(c))`$; for example, truncating `2.3.1.1` to level 2 gives `2.3`.
 The default is the most detailed level common to all selected editions ($L = 4$ for the catalogued
 editions). The level-4 field is always the one read, because some editions store levels 1–3
 without dots (`111`).

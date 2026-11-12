@@ -97,7 +97,7 @@ written to the data dictionary of each run.
 ### 2.4 Comparison level
 
 Let $h(c)$ be the harmonised level-4 code of a polygon. The class at comparison level
-$L \in \lbrace 1,2,3,4brace $ is the truncation of the dotted code to its first $L$ elements,
+$L \in \lbrace 1,2,3,4\rbrace $ is the truncation of the dotted code to its first $L$ elements,
 $c^{(L)} = \mathrm{trunc}_L(h(c))$, for example $\mathrm{trunc}_2(\texttt{2.3.1.1}) = \texttt{2.3}$.
 The default is the most detailed level common to all selected editions ($L = 4$ for the catalogued
 editions). The level-4 field is always the one read, because some editions store levels 1–3
@@ -146,7 +146,7 @@ series, and $a_y = 0$ denotes a difference between the two maps of the same year
 
 Notation. Editions $t = 1,\dots,T$ with reference years $y_1 < \dots < y_T$; $c_t$ is the class of
 the sample at edition $t$ at the comparison level, or missing if the point lies outside every
-polygon. The observed editions are $O = \lbrace t : c_t \text{ not missing}brace $, re-indexed
+polygon. The observed editions are $O = \lbrace t : c_t \text{ not missing}\rbrace $, re-indexed
 $k = 1,\dots,m$ in time order, with classes $c_{(k)}$ and years $y_{(k)}$. Metrics are computed on
 the observed editions only; with $m < 2$ all change-based metrics are missing. In `S1+S2` runs the
 metrics are computed separately for each series.
@@ -160,7 +160,7 @@ metrics are computed separately for each series.
 | `stability_index` | $SI = 1 - \dfrac{N}{m-1}$ | $[0,1]$ |
 | `modal_persistence` | $P = \max_{j} \dfrac{1}{m} \sum_{k=1}^{m} \mathbb{1}\left[c_{(k)} = j\right]$ | $[1/m,1]$ |
 | `time_weighted_persistence` | $P_w = \dfrac{\sum_{k=2}^{m} \left(y_{(k)} - y_{(k-1)}\right) \mathbb{1}\left[c_{(k)} = c_{(k-1)}\right]}{y_{(m)} - y_{(1)}}$ | $[0,1]$ |
-| `last_change_year` | $\max \lbrace  y_{(k)} : c_{(k)} \neq c_{(k-1)} brace $; missing if $N = 0$ | year |
+| `last_change_year` | $\max \lbrace  y_{(k)} : c_{(k)} \neq c_{(k-1)} \rbrace $; missing if $N = 0$ | year |
 | `flip_flop` | $F = \mathbb{1}\left[\exists k : c_{(k)} \neq c_{(k+1)} \wedge c_{(k+2)} = c_{(k)}\right]$ | 0/1 |
 | `min_boundary_dist_m` | $d_{\min} = \min_{t \in O} d_t$ | m |
 | `near_boundary` | $B = \mathbb{1}[d_{\min} < \tau]$, with $\tau$ the boundary threshold (default 25 m) | 0/1 |
@@ -185,7 +185,7 @@ No composite index is computed; each metric answers a different question.
 Transition matrix between consecutive editions $t-1$ and $t$ (point counts, with `NA` as an
 additional category):
 
-$$M_{ij} = \left|\lbrace  p : c_{t-1}(p) = i \wedge c_t(p) = j brace \right|, \qquad \sum_{i,j} M_{ij} = n .$$
+$$M_{ij} = \left|\lbrace  p : c_{t-1}(p) = i \wedge c_t(p) = j \rbrace \right|, \qquad \sum_{i,j} M_{ij} = n .$$
 
 Group summary, for a group $g$ of $n_g$ samples (optional group field):
 
@@ -193,7 +193,7 @@ Group summary, for a group $g$ of $n_g$ samples (optional group field):
 |---|---|
 | `n_points` | $n_g$ |
 | `n_polygons_<year>` | number of distinct polygons containing the samples of the group |
-| `prop_changed` | $\dfrac{\lvert\lbrace p \in g : N_p > 0brace \rvert}{\lvert\lbrace p \in g : m_p \geq 2brace \rvert}$ |
+| `prop_changed` | $\dfrac{\lvert\lbrace p \in g : N_p > 0\rbrace \rvert}{\lvert\lbrace p \in g : m_p \geq 2\rbrace \rvert}$ |
 | `n_trajectories` | number of distinct trajectories |
 | `prop_near_boundary` | mean of $B$ over the group |
 | `prop_agree_l1_<year>` | mean of $a_y$ over the group (`S1+S2` only) |

@@ -136,130 +136,152 @@ Function: `core.join_edition`.
 
 ## 4. Metrics per sample
 
-Let $`O = \lbrace t : c_t \neq \varnothing \rbrace`$ be the observed editions, $`m = \lvert O \rvert`$,
-re-indexed $`j = 1,\dots,m`$ in time order with classes $`c_{(j)}`$ and years $`y_{(j)}`$. A change
-indicator for each consecutive observed pair is
+Let $`c_t`$ be the class of the sample at edition $`t = 1,\dots,T`$ and $`\Delta_t = y_t - y_{t-1}`$
+the number of years between editions $`t-1`$ and $`t`$. Editions in which the point has no class
+are left out, and $`T`$ then counts the editions that remain. With fewer than two such editions
+the metrics 4.2 to 4.7 are empty.
+
+### 4.1 Trajectory
 
 ```math
-\delta_j = \mathbb{1}\left[ c_{(j)} \neq c_{(j-1)} \right], \qquad j = 2,\dots,m .
+\text{trajectory} = c_1 \mid c_2 \mid \dots \mid c_T
 ```
 
-If $`m < 2`$ the metrics of 4.2–4.8 are missing.
+The sequence of classes in time order (`NA` where there is no class). `n_missing` is the number of
+editions without a class.
 
-**4.1 `trajectory`, `n_missing`.** The string $`c_1 \mid c_2 \mid \dots \mid c_T`$ with `NA` for
-$`\varnothing`$; $`n_{\text{missing}} = T - m`$.
-
-**4.2 `n_changes`.**
+### 4.2 Simple stability
 
 ```math
-N = \sum_{j=2}^{m} \delta_j
+S = \begin{cases} 1 & \text{if } c_1 = c_2 = \dots = c_T \\ 0 & \text{otherwise} \end{cases}
 ```
 
-**4.3 `stable`.** $`S = \mathbb{1}[N = 0]`$.
+Column `stable`. The easiest to communicate, but it keeps no information about the changes.
 
-**4.4 `stability_index`.** Share of consecutive pairs without change:
+### 4.3 Number of changes and stability index
 
 ```math
-SI = 1 - \frac{N}{m - 1} \in [0, 1]
+N = \sum_{t=2}^{T} \mathbb{1}\left[ c_t \neq c_{t-1} \right], \qquad SI = 1 - \frac{N}{T - 1}
 ```
 
-**4.5 `modal_persistence`.** Share of observed editions in the most frequent class:
+Columns `n_changes` and `stability_index`. $`SI = 1`$ means the point never changed; $`SI = 0`$
+means it changed at every edition.
+
+### 4.4 Modal persistence
 
 ```math
-P = \max_{a} \ \frac{1}{m} \sum_{j=1}^{m} \mathbb{1}\left[ c_{(j)} = a \right] \in \left[ \tfrac{1}{m}, 1 \right]
+P = \max_{k} \ \frac{1}{T} \sum_{t=1}^{T} \mathbb{1}\left[ c_t = k \right]
 ```
 
-**4.6 `time_weighted_persistence`.** Share of the observed time span without change. With
-$`\Delta_j = y_{(j)} - y_{(j-1)}`$:
+Column `modal_persistence`: the share of editions spent in the most frequent class. It separates
+cases that $`N`$ confuses. The trajectories `A B A B A` and `A B C D E` both have $`N = 4`$; in the
+first $`P = 3/5 = 0.6`$, in the second $`P = 1/5 = 0.2`$.
+
+### 4.5 Time-weighted persistence
+
+The intervals between editions are unequal: 12, 3, 5 and 3 years in Series 1
+(1995 → 2007 → 2010 → 2015 → 2018). A change between 1995 and 2007 summarises 12 years, one
+between 2015 and 2018 only 3. To take this into account:
 
 ```math
-P_w = \frac{\sum_{j=2}^{m} \Delta_j \, (1 - \delta_j)}{\sum_{j=2}^{m} \Delta_j} = \frac{\sum_{j=2}^{m} \Delta_j \, (1 - \delta_j)}{y_{(m)} - y_{(1)}} \in [0, 1]
+P_w = \frac{\sum_{t=2}^{T} \Delta_t \cdot \mathbb{1}\left[ c_t = c_{t-1} \right]}{\sum_{t=2}^{T} \Delta_t}
 ```
 
-An interval counts as unchanged if the classes at its two ends are equal; the date of a change
-within an interval is unknown. $`SI`$ is the special case of $`P_w`$ with all $`\Delta_j`$ equal.
+Column `time_weighted_persistence`: the fraction of the total period (23 years in Series 1) during
+which the point stayed in the same class. An interval counts as unchanged when the classes at its
+two ends are equal; the date of a change inside an interval is unknown. With equal intervals,
+$`P_w = SI`$.
 
-**4.7 `last_change_year`.**
+Example with the Series 1 intervals. One change in 1995–2007 (`B A A A A`):
 
 ```math
-y^{*} = \max \lbrace y_{(j)} : \delta_j = 1 \rbrace
+SI = 1 - \tfrac{1}{4} = 0.75, \qquad P_w = \frac{3 + 5 + 3}{23} = 0.478
 ```
 
-missing if $`N = 0`$. The last change occurred in the interval $`(y_{(j-1)}, y_{(j)}]`$.
-
-**4.8 `flip_flop`.**
+One change in 2015–2018 (`A A A A B`):
 
 ```math
-F = \mathbb{1}\left[ \exists\, j \in \lbrace 1,\dots,m-2 \rbrace : c_{(j)} \neq c_{(j+1)} \ \wedge \ c_{(j+2)} = c_{(j)} \right]
+SI = 1 - \tfrac{1}{4} = 0.75, \qquad P_w = \frac{12 + 3 + 5}{23} = 0.870
 ```
 
-**4.9 `min_boundary_dist_m`, `near_boundary`.** With threshold $`\tau`$ (default 25 m):
+### 4.6 Year of the last change
 
 ```math
-d_{\min} = \min_{t \in O} d_t, \qquad B = \mathbb{1}\left[ d_{\min} < \tau \right]
+y^{*} = \max \lbrace y_t : c_t \neq c_{t-1} \rbrace
 ```
 
-The default is of the order of the COS minimum distance between lines (20 m) plus its positional
-accuracy (5.5 m).
+Column `last_change_year`; empty if $`N = 0`$. The change occurred between $`y_{t-1}`$ and $`y_t`$,
+not necessarily in year $`y_t`$.
 
-**4.10 `pts_in_poly_<y_T>`.** Number of samples in the polygon of the last edition:
+### 4.7 Flip-flop
+
+```math
+F = \begin{cases} 1 & \text{if } c_{t-1} \neq c_t \ \text{ and } \ c_{t+1} = c_{t-1} \ \text{ for some } t \\ 0 & \text{otherwise} \end{cases}
+```
+
+Column `flip_flop`: a return trip A → B → A. In COS, a return trip between close editions often
+indicates an interpretation error in one edition and not a real change.
+
+### 4.8 Distance to the boundary
+
+```math
+d_{\min} = \min_{t} d_t, \qquad B = \begin{cases} 1 & \text{if } d_{\min} < \tau \\ 0 & \text{otherwise} \end{cases}
+```
+
+Columns `min_boundary_dist_m` and `near_boundary`, with $`d_t`$ from section 3.4 and $`\tau`$ the
+boundary threshold (default 25 m, of the order of the COS minimum distance between lines, 20 m,
+plus its positional accuracy, 5.5 m). A change at a point with $`B = 1`$ may be a difference in
+how the boundary was drawn.
+
+### 4.9 Samples per polygon
 
 ```math
 \pi(p) = \left\lvert \lbrace q : P_T(q) = P_T(p) \rbrace \right\rvert
 ```
 
+Column `pts_in_poly_<last year>`: the number of samples in the same polygon as $`p`$ in the last
+edition. Samples in one polygon have the same class by construction and are not independent
+observations.
+
+No composite index is computed: each metric answers a different question.
+
 Functions: `metrics.sample_metrics`, `metrics.compute_metrics`.
-
-### Worked example
-
-Series 1, years 1995, 2007, 2010, 2015, 2018; $`\Delta = (12, 3, 5, 3)`$, span 23 years.
-Trajectory `3.0.0.0|1.0.0.0|1.0.0.0|1.0.0.0|1.0.0.0`: $`\delta = (1, 0, 0, 0)`$, so
-
-```math
-N = 1, \quad SI = 1 - \tfrac{1}{4} = 0.75, \quad P = \tfrac{4}{5} = 0.8, \quad P_w = \tfrac{3 + 5 + 3}{23} = 0.478, \quad y^{*} = 2007, \quad F = 0 .
-```
-
-Trajectory `2.1.1.1|2.1.1.1|2.1.1.1|2.1.1.1|2.2.3.1`: $`\delta = (0, 0, 0, 1)`$, so
-$`SI = 0.75`$ again but $`P_w = \tfrac{12 + 3 + 5}{23} = 0.870`$ and $`y^{*} = 2018`$.
 
 ## 5. Series 1 + Series 2
 
 ### 5.1 Trajectory
 
-Let $`y_J`$ be the year of the first Series 2 edition (2018). The trajectory is the Series 1
-editions with $`y < y_J`$ followed by the Series 2 editions:
+The trajectory is the Series 1 editions before the first Series 2 year, followed by the Series 2
+editions, all in merged classes (section 2.3):
 
 ```math
-(1995, 2007, 2010, 2015)_{S1} \ \Vert \ (2018, 2025)_{S2},
+\underbrace{c_{1995},\ c_{2007},\ c_{2010},\ c_{2015}}_{\text{Series 1}} \ \mid \ \underbrace{c_{2018},\ c_{2025}}_{\text{Series 2}}
 ```
 
-with all classes expressed as merged classes (section 2.3). The metrics of section 4 are computed
-on this trajectory. The pair $`(2015_{S1}, 2018_{S2})`$ is the **junction**.
+The metrics of section 4 are computed on these six classes. The step from 2015 (Series 1) to 2018
+(Series 2) is the **junction**.
 
 ### 5.2 Series check
 
-The Series 1 map of $`y_J`$ (COS2018v2) is not part of the trajectory. Its merged class at the
-point is $`c^{S1}_{J}`$ (column `cls_2018_S1`), and
+The Series 1 map of 2018 (COS2018v2) is not part of the trajectory. Its merged class at the point,
+$`c^{S1}_{2018}`$ (column `cls_2018_S1`), is compared with the Series 2 class of the same year:
 
 ```math
-a_J = \mathbb{1}\left[ c^{S1}_{J} = c_{J} \right]
+a = \begin{cases} 1 & \text{if } c^{S1}_{2018} = c_{2018} \\ 0 & \text{otherwise} \end{cases}
 ```
 
-(column `series_check_2018`; missing if either class is missing). Both maps describe the same
-year, so $`a_J = 0`$ is a difference between the series, not a change.
+Column `series_check_2018`. Both maps describe the same year, so $`a = 0`$ is a difference between
+the series, not a change.
 
 ### 5.3 Series-switch change
 
-A change at the junction is attributed to the switch of series when Series 1 alone shows no
-change over the same interval. With $`j_J`$ the observed index of year $`y_J`$:
-
 ```math
-\sigma = \mathbb{1}\left[ \delta_{j_J} = 1 \ \wedge \ c^{S1}_{J} = c_{(j_J - 1)} \right]
+\sigma = \begin{cases} 1 & \text{if } c_{2018} \neq c_{2015} \ \text{ and } \ c^{S1}_{2018} = c_{2015} \\ 0 & \text{otherwise} \end{cases}
 ```
 
-If $`\sigma = 1`$, Series 1 gives the same class in 2015 and 2018, and Series 2 gives a different
-class in 2018: the two series describe the same land differently. If Series 1 also changed between
-2015 and 2018 ($`c^{S1}_{J} \neq c_{(j_J-1)}`$), the change is kept as a change.
+$`\sigma = 1`$ when the trajectory changes at the junction although Series 1 itself shows the same
+class in 2015 and 2018: the two series describe the same land differently. If Series 1 also
+changed between 2015 and 2018, the change is kept as a change.
 
 ## 6. Interpretation category
 
@@ -267,16 +289,16 @@ Column `interpretation`; the first rule that applies:
 
 | Order | Condition | Category |
 |---|---|---|
-| 1 | $`m < 2`$ | `insufficient_data` |
+| 1 | fewer than two editions with a class | `insufficient_data` |
 | 2 | $`N = 0`$ | `stable` |
-| 3 | $`N = 1`$ and $`\sigma = 1`$ (every change is a series-switch change) | `series_difference` |
+| 3 | $`N = 1`$ and $`\sigma = 1`$ (the only change is a series-switch change) | `series_difference` |
 | 4 | $`F = 1`$ | `flip_flop` |
 | 5 | $`B = 1`$ | `near_boundary` |
 | 6 | otherwise | `change` |
 
 Rule 3 applies only to `S1+S2` runs. The categories are mutually exclusive and exhaustive.
-`change` therefore means: at least one change, not explained by the switch of series, no A–B–A
-pattern, and the point at least $`\tau`$ from every polygon boundary in every edition.
+`change` therefore means: at least one change, not explained by the switch of series, no return
+trip, and the point at least $`\tau`$ from every polygon boundary in every edition.
 
 Functions: `metrics.interpret`, `metrics.interpret_table`.
 

@@ -124,16 +124,16 @@ Written to `<output folder>/<run id>/`:
 | `series_check_2018` | `S1+S2` only: 1 if the Series 1 and Series 2 maps of 2018 give the same class. | 5.2 |
 | `trajectory` | Classes in time order separated by <code>&#124;</code>; `NA` if missing. | 4.1 |
 | `n_missing` | Editions without a polygon at the point. | 4.1 |
-| `stable` | 1 if the class never changes. | 4.3 |
-| `n_changes` | Number of changes between consecutive editions. | 4.2 |
-| `stability_index` | Share of intervals without change. | 4.4 |
-| `modal_persistence` | Share of editions in the most frequent class. | 4.5 |
-| `time_weighted_persistence` | Share of the years without change. | 4.6 |
-| `last_change_year` | Year of the edition in which the last change is observed. | 4.7 |
-| `flip_flop` | 1 if the class goes A → B → A in consecutive editions. | 4.8 |
-| `min_boundary_dist_m` | Smallest `dist_<year>`. | 4.9 |
-| `near_boundary` | 1 if `min_boundary_dist_m` is below the threshold. | 4.9 |
-| `pts_in_poly_<last year>` | Samples sharing the polygon of the last edition. | 4.10 |
+| `stable` | 1 if the class never changes. | 4.2 |
+| `n_changes` | Number of changes between consecutive editions. | 4.3 |
+| `stability_index` | Share of intervals without change. | 4.3 |
+| `modal_persistence` | Share of editions in the most frequent class. | 4.4 |
+| `time_weighted_persistence` | Share of the years without change. | 4.5 |
+| `last_change_year` | Year of the edition in which the last change is observed. | 4.6 |
+| `flip_flop` | 1 if the class goes A → B → A in consecutive editions. | 4.7 |
+| `min_boundary_dist_m` | Smallest `dist_<year>`. | 4.8 |
+| `near_boundary` | 1 if `min_boundary_dist_m` is below the threshold. | 4.8 |
+| `pts_in_poly_<last year>` | Samples sharing the polygon of the last edition. | 4.9 |
 | `interpretation` | `stable`, `change`, `near_boundary`, `flip_flop`, `series_difference` or `insufficient_data`. | 6 |
 
 ### `interpretation`

@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/img/logo.png" alt="dgt-cos-trajectories logo" width="180"></p>
+
 # dgt-cos-trajectories
 
 Land-use/land-cover (LULC) history of point samples from the *Carta de Uso e Ocupação do Solo*

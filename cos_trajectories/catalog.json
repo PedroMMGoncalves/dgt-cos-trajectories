@@ -1,0 +1,331 @@
+{
+  "_comment": "Known DGT COS products. Edit by hand when DGT publishes a new edition/version, then re-run tools/extract_nomenclature.py. Codes are always read from the level-4 field and recoded to coarser levels by truncation of the dotted code.",
+  "nomenclatures": {
+    "S1-1995": {
+      "series": "S1",
+      "levels": 4,
+      "n_classes": 44,
+      "mmu_ha": 1,
+      "min_line_distance_m": 20,
+      "description": "COS1995v2 simplified nomenclature (44 classes at level 4). Zero digits (1.0.0.0, 3.0.0.0, 7.1.1.0) mark classes not subdivided in 1995.",
+      "source": "DGT (2022), Especificações técnicas da COS 1995, 2007, 2010, 2015 e 2018, Anexo 2"
+    },
+    "S1-2007": {
+      "series": "S1",
+      "levels": 4,
+      "n_classes": 83,
+      "mmu_ha": 1,
+      "min_line_distance_m": 20,
+      "description": "Series 1 nomenclature of COS2007v3, COS2010v2, COS2015v2 and COS2018v2 (83 classes at level 4).",
+      "source": "DGT (2022), Especificações técnicas da COS 1995, 2007, 2010, 2015 e 2018, Anexo 1"
+    },
+    "S2-2023v1": {
+      "series": "S2",
+      "levels": 4,
+      "n_classes": 93,
+      "mmu_ha": 1,
+      "min_line_distance_m": 20,
+      "description": "Earlier Series 2 nomenclature of COS2018v3 and COS2023v1 (93 classes at level 4).",
+      "source": "DGT (2025), Especificações técnicas e metodologia de produção da COS2023"
+    },
+    "S2-2025": {
+      "series": "S2",
+      "levels": 4,
+      "n_classes": 102,
+      "mmu_ha": 0.5,
+      "min_line_distance_m": 20,
+      "description": "Series 2 nomenclature of COS2018v4 and COS2025v1 (102 classes at level 4).",
+      "source": "DGT (2026), Especificações técnicas da Série 2 da COS de Portugal Continental, Anexo 1"
+    }
+  },
+  "crosswalks": {
+    "S1-2007->S1-1995": {
+      "from": "S1-2007",
+      "to": "S1-1995",
+      "source": "DGT (2022), Especificações técnicas da COS 1995, 2007, 2010, 2015 e 2018, Anexo 3",
+      "map": {
+        "1.1.1.1": "1.0.0.0",
+        "1.1.1.2": "1.0.0.0",
+        "1.1.2.1": "1.0.0.0",
+        "1.1.2.2": "1.0.0.0",
+        "1.1.3.1": "1.0.0.0",
+        "1.1.3.2": "1.0.0.0",
+        "1.2.1.1": "1.0.0.0",
+        "1.2.2.1": "1.0.0.0",
+        "1.2.3.1": "1.0.0.0",
+        "1.3.1.1": "1.0.0.0",
+        "1.3.1.2": "1.0.0.0",
+        "1.3.2.1": "1.0.0.0",
+        "1.3.2.2": "1.0.0.0",
+        "1.4.1.1": "1.0.0.0",
+        "1.4.1.2": "1.0.0.0",
+        "1.4.2.1": "1.0.0.0",
+        "1.4.2.2": "1.0.0.0",
+        "1.4.2.3": "1.0.0.0",
+        "1.4.3.1": "1.0.0.0",
+        "1.4.3.2": "1.0.0.0",
+        "1.5.1.1": "1.0.0.0",
+        "1.5.1.2": "1.0.0.0",
+        "1.5.2.1": "1.0.0.0",
+        "1.5.2.2": "1.0.0.0",
+        "1.5.3.1": "1.0.0.0",
+        "1.6.1.1": "1.0.0.0",
+        "1.6.1.2": "1.0.0.0",
+        "1.6.2.1": "1.0.0.0",
+        "1.6.2.2": "1.0.0.0",
+        "1.6.3.1": "1.0.0.0",
+        "1.6.4.1": "1.0.0.0",
+        "1.6.5.1": "1.0.0.0",
+        "1.7.1.1": "1.0.0.0",
+        "2.1.1.1": "2.1.1.1",
+        "2.1.1.2": "2.1.1.2",
+        "2.2.1.1": "2.2.1.1",
+        "2.2.2.1": "2.2.2.1",
+        "2.2.3.1": "2.2.3.1",
+        "2.3.1.1": "2.2.1.1",
+        "2.3.1.2": "2.2.2.1",
+        "2.3.1.3": "2.2.3.1",
+        "2.3.2.1": "2.3.2.1",
+        "2.3.3.1": "2.3.3.1",
+        "2.4.1.1": "2.1.1.1",
+        "3.1.1.1": "3.0.0.0",
+        "3.1.2.1": "3.0.0.0",
+        "4.1.1.1": "4.1.1.1",
+        "4.1.1.2": "4.1.1.2",
+        "4.1.1.3": "4.1.1.3",
+        "4.1.1.4": "4.1.1.4",
+        "4.1.1.5": "4.1.1.5",
+        "4.1.1.6": "4.1.1.6",
+        "4.1.1.7": "4.1.1.7",
+        "5.1.1.1": "5.1.1.1",
+        "5.1.1.2": "5.1.1.2",
+        "5.1.1.3": "5.1.1.3",
+        "5.1.1.4": "5.1.1.4",
+        "5.1.1.5": "5.1.1.5",
+        "5.1.1.6": "5.1.1.7",
+        "5.1.1.7": "5.1.1.7",
+        "5.1.2.1": "5.1.2.1",
+        "5.1.2.2": "5.1.2.2",
+        "5.1.2.3": "5.1.2.3",
+        "6.1.1.1": "6.1.1.1",
+        "7.1.1.1": "7.1.1.0",
+        "7.1.1.2": "7.1.1.0",
+        "7.1.2.1": "7.1.2.1",
+        "7.1.3.1": "7.1.3.1",
+        "8.1.1.1": "8.1.1.1",
+        "8.1.2.1": "8.1.2.1",
+        "8.1.2.2": "8.1.2.2",
+        "9.1.1.1": "9.1.1.1",
+        "9.1.1.2": "9.1.1.2",
+        "9.1.2.1": "9.1.2.1",
+        "9.1.2.2": "9.1.2.2",
+        "9.1.2.3": "9.1.2.3",
+        "9.1.2.4": "9.1.2.4",
+        "9.1.2.5": "9.1.2.5",
+        "9.2.1.1": "9.2.1.1",
+        "9.3.1.1": "9.3.1.1",
+        "9.3.2.1": "9.3.2.1",
+        "9.3.3.1": "9.3.3.1",
+        "9.3.4.1": "9.3.4.1"
+      }
+    }
+  },
+  "products": [
+    {
+      "edition": 1995,
+      "version": 2,
+      "series": "S1",
+      "layer": "COS1995v2",
+      "id_field": "ID",
+      "code_field": "COS95n4_C",
+      "label_field": "COS95n4_L",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "COS95n1_C",
+          "COS95n1_L"
+        ],
+        "2": [
+          "COS95n2_C",
+          "COS95n2_L"
+        ],
+        "3": [
+          "COS95n3_C",
+          "COS95n3_L"
+        ]
+      },
+      "nomenclature": "S1-1995",
+      "obsolete": false
+    },
+    {
+      "edition": 2007,
+      "version": 3,
+      "series": "S1",
+      "layer": "COS2007v3",
+      "id_field": "ID",
+      "code_field": "COS07n4_C",
+      "label_field": "COS07n4_L",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "COS07n1_C",
+          "COS07n1_L"
+        ],
+        "2": [
+          "COS07n2_C",
+          "COS07n2_L"
+        ],
+        "3": [
+          "COS07n3_C",
+          "COS07n3_L"
+        ]
+      },
+      "nomenclature": "S1-2007",
+      "obsolete": false
+    },
+    {
+      "edition": 2010,
+      "version": 2,
+      "series": "S1",
+      "layer": "COS2010v2",
+      "id_field": "ID",
+      "code_field": "COS10n4_C",
+      "label_field": "COS10n4_L",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "COS10n1_C",
+          "COS10n1_L"
+        ],
+        "2": [
+          "COS10n2_C",
+          "COS10n2_L"
+        ],
+        "3": [
+          "COS10n3_C",
+          "COS10n3_L"
+        ]
+      },
+      "nomenclature": "S1-2007",
+      "obsolete": false
+    },
+    {
+      "edition": 2015,
+      "version": 2,
+      "series": "S1",
+      "layer": "COS2015v2",
+      "id_field": "ID",
+      "code_field": "COS15n4_C",
+      "label_field": "COS15n4_L",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "COS15n1_C",
+          "COS15n1_L"
+        ],
+        "2": [
+          "COS15n2_C",
+          "COS15n2_L"
+        ],
+        "3": [
+          "COS15n3_C",
+          "COS15n3_L"
+        ]
+      },
+      "nomenclature": "S1-2007",
+      "obsolete": false
+    },
+    {
+      "edition": 2018,
+      "version": 2,
+      "series": "S1",
+      "layer": "COS2018v2",
+      "id_field": "ID",
+      "code_field": "COS18n4_C",
+      "label_field": "COS18n4_L",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "COS18n1_C",
+          "COS18n1_L"
+        ],
+        "2": [
+          "COS18n2_C",
+          "COS18n2_L"
+        ],
+        "3": [
+          "COS18n3_C",
+          "COS18n3_L"
+        ]
+      },
+      "nomenclature": "S1-2007",
+      "obsolete": false
+    },
+    {
+      "edition": 2018,
+      "version": 4,
+      "series": "S2",
+      "layer": "cos2018v4",
+      "id_field": "ID",
+      "code_field": "cos18v4_n4_c",
+      "label_field": "cos18v4_n4_l",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "cos18v4_n1_c",
+          "cos18v4_n1_l"
+        ],
+        "2": [
+          "cos18v4_n2_c",
+          "cos18v4_n2_l"
+        ],
+        "3": [
+          "cos18v4_n3_c",
+          "cos18v4_n3_l"
+        ]
+      },
+      "nomenclature": "S2-2025",
+      "obsolete": false
+    },
+    {
+      "edition": 2023,
+      "version": 1,
+      "series": "S2",
+      "layer": "COS2023v1",
+      "id_field": "ID",
+      "code_field": "COS23_n4_C",
+      "label_field": "COS23_n4_L",
+      "code_level": 4,
+      "level_fields": {},
+      "nomenclature": "S2-2023v1",
+      "obsolete": true,
+      "obsolete_reason": "COS2023v1 follows the earlier Series 2 specifications (93 classes, shared with COS2018v3). DGT states that only COS2018v4 and COS2025v1 are comparable with each other until the new specifications are applied to the other Series 2 editions; several level-4 codes have a different meaning in COS2023v1 (e.g. 1.2.2.1)."
+    },
+    {
+      "edition": 2025,
+      "version": 1,
+      "series": "S2",
+      "layer": "cos2025v1",
+      "id_field": "ID",
+      "code_field": "cos25v1_n4_c",
+      "label_field": "cos25v1_n4_l",
+      "code_level": 4,
+      "level_fields": {
+        "1": [
+          "cos25v1_n1_c",
+          "cos25v1_n1_l"
+        ],
+        "2": [
+          "cos25v1_n2_c",
+          "cos25v1_n2_l"
+        ],
+        "3": [
+          "cos25v1_n3_c",
+          "cos25v1_n3_l"
+        ]
+      },
+      "nomenclature": "S2-2025",
+      "obsolete": false
+    }
+  ]
+}

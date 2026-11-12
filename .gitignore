@@ -1,0 +1,13 @@
+# Data folders: only the placeholder files are versioned.
+00_ZIP/*
+01_COS/*
+02_Amostras/*
+03_Resultados/*
+!*/.gitkeep
+!*/README.md
+
+__pycache__/
+*.pyc
+.pytest_cache/
+# ArcGIS Pro side files next to the toolbox
+*.pyt.xml

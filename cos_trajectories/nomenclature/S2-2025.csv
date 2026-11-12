@@ -1,0 +1,183 @@
+level,code,label
+1,1,Territórios artificializados
+1,2,Agricultura
+1,3,Pastagens
+1,4,Superfícies agroflorestais (SAF)
+1,5,Florestas
+1,6,Matos
+1,7,Espaços descobertos ou com pouca vegetação
+1,8,Zonas húmidas
+1,9,Massas de água superficiais
+2,1.1,Áreas edificadas residenciais
+2,1.2,Áreas edificadas de atividades económicas
+2,1.3,Equipamentos
+2,1.4,Infraestruturas
+2,1.5,Transportes
+2,1.6,Áreas de exploração de recursos geológicos
+2,1.7,Vazios sem construção e áreas em construção
+2,1.8,Espaços verdes e hortas comunitárias
+2,2.1,Culturas temporárias
+2,2.2,Culturas permanentes
+2,2.3,Culturas temporárias e/ou pastagens melhoradas associadas a culturas permanentes
+2,2.4,Agricultura e viveiros protegidos
+2,3.1,Pastagens melhoradas e pastagens espontâneas
+2,4.1,Superfícies agrossilvícolas
+2,4.2,Superfícies silvopastoris
+2,5.1,Florestas
+2,6.1,Matos
+2,7.1,Espaços descobertos ou com pouca vegetação
+2,8.1,Zonas húmidas
+2,9.1,Massas de água interiores
+2,9.2,Aquicultura
+2,9.3,Massas de água de transição e costeiras
+3,1.1.1,Áreas edificadas residenciais contínuas
+3,1.1.2,Áreas edificadas residenciais descontínuas
+3,1.2.1,"Indústria, logística, comércio e serviços"
+3,1.2.2,Turismo
+3,1.2.3,"Instalações agrícolas, pecuárias e aquícolas"
+3,1.3.1,Equipamentos de educação e saúde
+3,1.3.2,Equipamentos culturais e sítios arqueológicos
+3,1.3.3,Equipamentos de desporto e lazer
+3,1.3.4,Cemitérios e outros equipamentos
+3,1.4.1,Infraestruturas de produção de energia renovável
+3,1.4.2,Infraestruturas de produção de energia não renovável
+3,1.4.3,Infraestruturas de transformação de energia
+3,1.4.4,Infraestruturas de águas
+3,1.4.5,Infraestruturas de resíduos
+3,1.4.6,Infraestruturas militares e outras infraestruturas
+3,1.5.1,Redes rodoviária e ferroviária
+3,1.5.2,Áreas portuárias
+3,1.5.3,Aeroportos e aeródromos
+3,1.5.4,Áreas de estacionamento
+3,1.6.1,Áreas de exploração de recursos geológicos
+3,1.7.1,Vazios sem construção e áreas em construção
+3,1.8.1,Espaços verdes e hortas comunitárias
+3,2.1.1,Culturas temporárias de sequeiro e regadio e arrozais
+3,2.2.1,Vinhas
+3,2.2.2,Pomares
+3,2.2.3,Olivais
+3,2.3.1,Culturas temporárias e/ou pastagens melhoradas associadas a culturas permanentes
+3,2.4.1,Agricultura e viveiros protegidos
+3,3.1.1,Pastagens melhoradas
+3,3.1.2,Pastagens espontâneas
+3,4.1.1,Superfícies agrossilvícolas de folhosas
+3,4.1.2,Superfícies agrossilvícolas de resinosas
+3,4.2.1,Superfícies silvopastoris de folhosas
+3,4.2.2,Superfícies silvopastoris de resinosas
+3,5.1.1,Florestas de folhosas
+3,5.1.2,Florestas de resinosas
+3,6.1.1,Matos
+3,7.1.1,"Praias, dunas e areais"
+3,7.1.2,Espaços rochosos
+3,7.1.3,Vegetação esparsa
+3,8.1.1,Zonas húmidas interiores
+3,8.1.2,Zonas húmidas litorais
+3,9.1.1,Cursos de água
+3,9.1.2,Planos de água
+3,9.2.1,Aquicultura
+3,9.3.1,Salinas
+3,9.3.2,Lagoas costeiras
+3,9.3.3,Desembocaduras fluviais
+3,9.3.4,Oceano
+4,1.1.1.1,Áreas edificadas residenciais contínuas predominantemente verticais
+4,1.1.1.2,Áreas edificadas residenciais contínuas predominantemente horizontais
+4,1.1.2.1,Áreas edificadas residenciais descontínuas
+4,1.1.2.2,Áreas edificadas residenciais descontínuas esparsas
+4,1.2.1.1,Indústria e logística
+4,1.2.1.2,Comércio e serviços
+4,1.2.2.1,Áreas edificadas turísticas
+4,1.2.2.2,Parques de campismo e de caravanismo
+4,1.2.3.1,Instalações agrícolas e pecuárias
+4,1.2.3.2,Instalações aquícolas
+4,1.3.1.1,Equipamentos de educação
+4,1.3.1.2,Equipamentos de saúde
+4,1.3.2.1,Equipamentos culturais
+4,1.3.2.2,Sítios arqueológicos
+4,1.3.3.1,Equipamentos desportivos
+4,1.3.3.2,Equipamentos de lazer
+4,1.3.3.3,Campos de golfe
+4,1.3.4.1,Cemitérios
+4,1.3.4.2,Outros equipamentos
+4,1.4.1.1,Infraestruturas de produção de energia hídrica
+4,1.4.1.2,Infraestruturas de produção de energia solar
+4,1.4.1.3,Infraestruturas de produção de energia eólica
+4,1.4.1.4,Outras Infraestruturas de produção de energia renovável
+4,1.4.2.1,Infraestruturas de produção de energia de fonte fóssil
+4,1.4.3.1,Subestações e postos de transformação de energia
+4,1.4.4.1,Infraestruturas de captação e tratamento de águas para consumo
+4,1.4.4.2,Infraestruturas de drenagem e tratamento de águas residuais
+4,1.4.5.1,Aterros
+4,1.4.5.2,Outras infraestruturas de resíduos
+4,1.4.6.1,Infraestruturas militares
+4,1.4.6.2,Outras infraestruturas
+4,1.5.1.1,Rede rodoviária
+4,1.5.1.2,Rede ferroviária
+4,1.5.2.1,Terminais portuários de mar e de rio
+4,1.5.2.2,Estaleiros navais e docas secas
+4,1.5.2.3,Marinas e docas pesca
+4,1.5.3.1,Aeroportos
+4,1.5.3.2,Aeródromos
+4,1.5.4.1,Áreas de estacionamento
+4,1.6.1.1,Minas a céu aberto
+4,1.6.1.2,Pedreiras
+4,1.7.1.1,Vazios sem construção
+4,1.7.1.2,Áreas em construção
+4,1.8.1.1,Espaços verdes
+4,1.8.1.2,Hortas comunitárias
+4,2.1.1.1,Culturas temporárias de sequeiro e regadio
+4,2.1.1.2,Arrozais
+4,2.2.1.1,Vinhas
+4,2.2.2.1,Pomares em copa de baixa densidade
+4,2.2.2.2,Pomares em copa de alta densidade
+4,2.2.2.3,Pomares em sebe
+4,2.2.3.1,Olival em copa de baixa densidade
+4,2.2.3.2,Olival em copa de alta densidade
+4,2.2.3.3,Olival em sebe
+4,2.3.1.1,Culturas temporárias e/ou pastagens melhoradas associadas a vinha
+4,2.3.1.2,Culturas temporárias e/ou pastagens melhoradas associadas a pomar
+4,2.3.1.3,Culturas temporárias e/ou pastagens melhoradas associadas a olival
+4,2.4.1.1,Agricultura e viveiros protegidos
+4,3.1.1.1,Pastagens melhoradas
+4,3.1.2.1,Pastagens espontâneas
+4,4.1.1.1,Superfícies agrossilvícolas de sobreiro
+4,4.1.1.2,Superfícies agrossilvícolas de azinheira
+4,4.1.1.3,Superfícies agrossilvícolas de outros carvalhos
+4,4.1.1.4,Superfícies agrossilvícolas de outras folhosas
+4,4.1.2.1,Superfícies agrossilvícolas de pinheiro manso
+4,4.1.2.2,Superfícies agrossilvícolas de outras resinosas
+4,4.2.1.1,Superfícies silvopastoris de sobreiro
+4,4.2.1.2,Superfícies silvopastoris de azinheira
+4,4.2.1.3,Superfícies silvopastoris de outros carvalhos
+4,4.2.1.4,Superfícies silvopastoris de outras folhosas
+4,4.2.2.1,Superfícies silvopastoris de pinheiro manso
+4,4.2.2.2,Superfícies silvopastoris de outras resinosas
+4,5.1.1.1,Florestas de sobreiro
+4,5.1.1.2,Florestas de azinheira
+4,5.1.1.3,Florestas de outros carvalhos
+4,5.1.1.4,Florestas de castanheiro
+4,5.1.1.5,Florestas de alfarrobeira
+4,5.1.1.6,Florestas de eucalipto
+4,5.1.1.7,Florestas de acácias
+4,5.1.1.8,Florestas de outras folhosas
+4,5.1.2.1,Florestas de pinheiro bravo
+4,5.1.2.2,Florestas de pinheiro manso
+4,5.1.2.3,Florestas de outras resinosas
+4,6.1.1.1,Matos
+4,7.1.1.1,"Praias, dunas e areais interiores"
+4,7.1.1.2,"Praias, dunas e areais costeiros"
+4,7.1.2.1,Espaços rochosos
+4,7.1.3.1,Vegetação esparsa
+4,8.1.1.1,Pauis e turfeiras
+4,8.1.2.1,Sapais
+4,9.1.1.1,Cursos de água naturais
+4,9.1.1.2,Cursos de água modificados ou artificializados
+4,9.1.2.1,Lagos e lagoas interiores artificiais
+4,9.1.2.2,Lagos e lagoas interiores naturais
+4,9.1.2.3,Albufeiras de barragens
+4,9.1.2.4,Albufeiras de represas ou de açudes
+4,9.1.2.5,Charcas
+4,9.2.1.1,Aquicultura
+4,9.3.1.1,Salinas
+4,9.3.2.1,Lagoas costeiras
+4,9.3.3.1,Desembocaduras fluviais
+4,9.3.4.1,Oceano

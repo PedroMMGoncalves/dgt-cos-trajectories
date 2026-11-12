@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "dgt-cos-trajectories: land-use/land-cover history of sample points from the DGT COS series"
+type: software
+version: 0.1.0
+date-released: 2026-11-12
+license: Apache-2.0
+repository-code: "https://github.com/PedroMMGoncalves/dgt-cos-trajectories"
+authors:
+  - family-names: "Gonçalves"
+    given-names: "Pedro"
+    orcid: "https://orcid.org/0000-0002-6556-6086"
+keywords:
+  - land use
+  - land cover
+  - land-use change
+  - COS
+  - Carta de Uso e Ocupação do Solo
+  - Portugal
+  - ArcGIS Pro
+references:
+  - type: data
+    title: "Carta de Uso e Ocupação do Solo (COS) de Portugal Continental"
+    authors:
+      - name: "Direção-Geral do Território"
+    url: "https://www.dgterritorio.gov.pt/"

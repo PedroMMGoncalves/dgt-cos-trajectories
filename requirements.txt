@@ -1,0 +1,10 @@
+# Same packages as the default ArcGIS Pro environment (arcgispro-py3), checked 2026-11-12.
+# Nothing beyond what ArcGIS Pro ships. For use outside ArcGIS see environment.yml.
+geopandas==1.1.3
+shapely==2.1.2
+fiona==1.10.1
+pandas==3.0.0
+numpy==2.3.5
+pyproj
+# tests
+pytest

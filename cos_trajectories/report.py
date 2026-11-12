@@ -1,9 +1,9 @@
 """Run manifest (machine-readable provenance) and data dictionary (for non-GIS users).
 
 The data dictionary describes every column, the classes, the correspondence
-tables applied, how to read the ``interpretation`` column and the
-limitations of the method. The mathematical definitions are in
-``docs/METHODS.md`` of the repository.
+table applied, how to read the ``interpretation`` column and the limitations
+of the method. The mathematical definitions are in ``docs/METHODS.md`` of the
+repository.
 """
 from pathlib import Path
 
@@ -14,22 +14,25 @@ BOUNDARY_WARNING = (
     "> delineation differences between editions, not a real land-use change."
 )
 
-
-def _merged(selection):
-    return selection.series == catalog.MERGED
+_USE = {
+    "stable": "Use as unchanged land use over the period covered.",
+    "change": "Use as changed land use; the interval is given by `last_change_year` and `trajectory`.",
+    "near_boundary": "Treat the change as uncertain; verify on imagery or analyse separately.",
+    "flip_flop": "Treat as uncertain; the intermediate class is probably an artefact.",
+    "insufficient_data": "Exclude from change analysis.",
+}
 
 
 def build_manifest(run_id, started, params, selection, ignored, cat, samples_path, samples_layer,
                    sample_crs, n_samples, counts, software, outputs, with_hash=True):
     layers = []
-    for role, sources in (("trajectory", selection.sources), ("series check", selection.check)):
-        for s in sources:
-            fp = io.file_fingerprint(s.path, with_hash=with_hash)
-            layers.append({
-                "role": role, "edition": s.edition, "version": s.product["version"],
-                "series": s.product["series"], "layer": s.layer, "class_field": s.code_field,
-                "id_field": s.id_field, "nomenclature": s.product["nomenclature"], **fp,
-            })
+    for s in selection.sources:
+        fp = io.file_fingerprint(s.path, with_hash=with_hash)
+        layers.append({
+            "edition": s.edition, "version": s.product["version"], "series": s.product["series"],
+            "layer": s.layer, "class_field": s.code_field, "id_field": s.id_field,
+            "nomenclature": s.product["nomenclature"], **fp,
+        })
     return {
         "run_id": run_id,
         "started": started.isoformat(timespec="seconds"),
@@ -37,9 +40,9 @@ def build_manifest(run_id, started, params, selection, ignored, cat, samples_pat
         "tool_version": __version__,
         "parameters": params,
         "series": selection.series,
-        "classes": selection.nomenclature,
+        "nomenclature": selection.nomenclature,
         "correspondences_applied": selection.crosswalk_sources(cat),
-        "levels_available": list(selection.levels),
+        "max_common_level": selection.max_level,
         "cos_layers": layers,
         "excluded_cos_layers": [{"file": s.path.name, "reason": r} for s, r in selection.excluded],
         "ignored_files": [{"file": p.name, "reason": r} for p, r in ignored],
@@ -60,18 +63,15 @@ def _table(header, rows):
     return "\n".join(lines)
 
 
-def _eds(sources):
-    return ", ".join(f"COS{s.edition}v{s.product['version']} ({s.product['series']})" for s in sources)
-
-
 def data_dictionary(selection, cat, labels, level, id_field, group_field, threshold, counts, run_id,
                     used_codes):
     sel = selection
-    merged = _merged(sel)
     years = sel.years
     last = years[-1]
     thr = f"{threshold:g}"
     n = counts["n_samples_out"]
+    nom = cat["nomenclatures"][sel.nomenclature]
+    notes = sel.crosswalk_sources(cat)
     out = [
         "# Data dictionary: COS land-use history of the samples",
         BOUNDARY_WARNING,
@@ -88,40 +88,21 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
         _table(["`interpretation`", "Samples", "Share", "Meaning", "Suggested use"], [
             [f"`{k}`", counts["interpretation"][k], f"{counts['interpretation'][k] / n:.1%}" if n else "",
              metrics.INTERPRETATION_MEANING[k], _USE[k]] for k in metrics.INTERPRETATION]),
-        "The categories are assigned in this order: `insufficient_data`, `stable`, `series_difference`, "
-        "`flip_flop`, `near_boundary`, `change`; a sample receives the first that applies. Then use "
-        "`trajectory` to see which classes are involved, `last_change_year` for when, and "
+        "The categories are assigned in this order: `insufficient_data`, `stable`, `flip_flop`, "
+        "`near_boundary`, `change`; a sample receives the first that applies. Then use `trajectory` to see "
+        "which classes are involved, `last_change_year` for when, and "
         f"`pts_in_poly_{last}` to see how many samples share one polygon (they are not independent "
         "observations).",
         "## COS editions and classes used",
         _table(["Item", "Value"], [
-            ["Series", sel.series + (" (both series merged in one trajectory)" if merged else "")],
-            ["Editions in the trajectory", _eds(sel.sources)],
-        ] + ([["Edition used only as a check", _eds(sel.check)]] if sel.check else []) + [
-            ["Classes", sel.nomenclature if merged else
-             f"{sel.nomenclature}: {cat['nomenclatures'][sel.nomenclature]['description']}"],
-            ["Comparison level", f"{level} (available: {', '.join(map(str, sel.levels))}; 1 = coarsest)"],
+            ["Series", f"{sel.series} (Series 1 and Series 2 are not comparable, DGT; one series per run)"],
+            ["Editions", ", ".join(f"COS{s.edition}v{s.product['version']}" for s in sel.sources)],
+            ["Nomenclature", f"{sel.nomenclature}: {nom['description']}"],
+            ["Comparison level", f"{level} of {sel.max_level} (1 = coarsest, 4 = most detailed)"],
             ["Boundary threshold", f"{thr} m"],
         ]),
     ]
-    notes = sel.crosswalk_sources(cat)
-    if merged:
-        out.append(
-            "Series 1 and Series 2 use different nomenclatures. Their classes were grouped into *merged "
-            "classes*: classes that DGT relates to each other (" + "; ".join(notes.values()) + ") form one "
-            "merged class, so that the same code means the same thing in every edition. Detail that exists "
-            "in only some editions is lost (for example the Series 2 olive-grove types become one class). "
-            "The table of merged classes is at the end of this document.")
-        for y, c in counts.get("series_check", {}).items():
-            out.append(
-                f"**Junction between the series.** The trajectory uses the Series 1 maps up to the edition "
-                f"before {y} and the Series 2 maps from {y}. DGT advises against comparing the two series, "
-                f"because definitions, production method and mapping unit differ. As a check, the Series 1 "
-                f"map of {y} was also read (`cls_{y}_S1`): it gives the same merged class as the Series 2 "
-                f"map of {y} at {c['agree']} of {c['compared']} samples (`series_check_{y}`). Where the two "
-                f"disagree and Series 1 shows no change, an apparent change at {y} is a difference between "
-                "series; such samples have `interpretation` = `series_difference`.")
-    elif notes:
+    if notes:
         out.append(
             f"Editions with a more detailed nomenclature were recoded to `{sel.nomenclature}` with the official "
             f"DGT correspondence table ({'; '.join(notes.values())}), so that the same code means the same "
@@ -146,19 +127,14 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
 
     cols = [[f"`{id_field}`", "Sample ID (from the input sample layer).", "text"]]
     for k, d, t in (
-        ("cls", "Class code at the comparison level. Empty if the point is outside every COS polygon.", "text"),
-        ("label", "Class name (Portuguese, DGT designations).", "text"),
+        ("cls", "COS class code at the comparison level (hierarchical: `2.1` is inside `2`). "
+                "Empty if the point is outside every COS polygon.", "text"),
+        ("label", "Class name (Portuguese, DGT nomenclature).", "text"),
         ("poly", "COS polygon identifier, `<year>_<DGT ID>`. Samples with the same value share the "
                  "same polygon, hence the same class by construction.", "text"),
         ("dist", "Distance from the point to the edge of its COS polygon.", "m"),
     ):
         cols.append([f"`{k}_<year>`", d, t])
-    for y in counts.get("series_check", {}):
-        cols += [
-            [f"`cls_{y}_S1`", f"Class of the Series 1 map of {y} (not part of the trajectory).", "text"],
-            [f"`series_check_{y}`", f"1 if the Series 1 and Series 2 maps of {y} give the same class at the "
-                                    "point, 0 if not.", "0/1"],
-        ]
     cols += [
         ["`trajectory`", "Classes in time order joined by `|`; `NA` = no polygon in that edition.", "text"],
         ["`n_missing`", "Editions without a COS polygon at the point.", "count"],
@@ -209,50 +185,29 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
     ])]
 
     level_codes = sorted((c for (lvl, c) in labels if lvl == level), key=metrics.natural_key)
-    member_noms = sorted({k for m in sel.members.values() for k in m}) if merged and level == 4 else []
-    rows = []
-    for c in level_codes:
-        row = [c, labels[(level, c)], "yes" if c in used_codes else ""]
-        row += [", ".join(sel.members.get(c, {}).get(k, [])) for k in member_noms]
-        rows.append(row)
-    out += [f"## Classes at level {level}" + (" (merged classes)" if member_noms else f" (`{sel.nomenclature}`)"),
-            "“In data” marks the classes that occur at the samples in this run."
-            + (" Codes ending in `.m<n>` group several Series 2 classes; codes ending in `(S1)` are "
-               "Series 1 classes without a Series 2 counterpart, so they cannot occur in a Series 2 edition."
-               if member_noms else ""),
-            _table(["Code", "Class", "In data"] + [f"{k} codes" for k in member_noms], rows)]
+    out += [f"## Classes at level {level} (`{sel.nomenclature}`)",
+            "“In data” marks the classes that occur at the samples in this run.",
+            _table(["Code", "Class (DGT)", "In data"],
+                   [[c, labels[(level, c)], "yes" if c in used_codes else ""] for c in level_codes])]
 
-    out += ["## Limitations", _limitations(sel, cat, merged)]
+    out += ["## Limitations", _limitations(sel, cat)]
 
-    if not merged:
-        for src, cw in sel.crosswalks.items():
-            src_labels = catalog.load_labels(src)
-            rows = [[c, src_labels.get((4, c), ""), t, labels.get((4, t), "")]
-                    for c, t in sorted(cw.items(), key=lambda kv: metrics.natural_key(kv[0]))]
-            out += [f"## Correspondence {src} → {sel.nomenclature} (level 4)",
-                    notes[f"{src}->{sel.nomenclature}"] + ".",
-                    _table([f"{src} code", f"{src} class", f"{sel.nomenclature} code",
-                            f"{sel.nomenclature} class"], rows)]
+    for src, cw in sel.crosswalks.items():
+        src_labels = catalog.load_labels(src)
+        rows = [[c, src_labels.get((4, c), ""), t, labels.get((4, t), "")]
+                for c, t in sorted(cw.items(), key=lambda kv: metrics.natural_key(kv[0]))]
+        out += [f"## Correspondence {src} → {sel.nomenclature} (level 4)",
+                notes[f"{src}->{sel.nomenclature}"] + ".",
+                _table([f"{src} code", f"{src} class", f"{sel.nomenclature} code",
+                        f"{sel.nomenclature} class"], rows)]
 
-    noms = sorted({s.product["nomenclature"] for s in list(sel.sources) + list(sel.check)})
-    out += ["## Sources", "\n".join([f"- {k}: {cat['nomenclatures'][k]['source']}" for k in noms]
-                                     + [f"- {k}: {v}" for k, v in notes.items()])]
+    noms = sorted({s.product["nomenclature"] for s in sel.sources})
+    out += ["## Sources", "\n".join(f"- {k}: {cat['nomenclatures'][k]['source']}" for k in noms)]
     return "\n\n".join(p for p in out if p) + "\n"
 
 
-_USE = {
-    "stable": "Use as unchanged land use over the period covered.",
-    "change": "Use as changed land use; the interval is given by `last_change_year` and `trajectory`.",
-    "near_boundary": "Treat the change as uncertain; verify on imagery or analyse separately.",
-    "flip_flop": "Treat as uncertain; the intermediate class is probably an artefact.",
-    "series_difference": "Treat as unchanged; the two series describe the place differently.",
-    "insufficient_data": "Exclude from change analysis.",
-}
-
-
-def _limitations(selection, cat, merged):
-    sources = list(selection.sources) + list(selection.check)
-    mmus = sorted({cat["nomenclatures"][s.product["nomenclature"]]["mmu_ha"] for s in sources})
+def _limitations(selection, cat):
+    mmus = sorted({cat["nomenclatures"][s.product["nomenclature"]]["mmu_ha"] for s in selection.sources})
     mmu = " / ".join(f"{m:g} ha" for m in mmus)
     items = [
         f"COS minimum mapping unit {mmu}, minimum distance between lines 20 m (DGT): smaller features "
@@ -262,19 +217,10 @@ def _limitations(selection, cat, merged):
         "A → B → A trajectories between close editions are often interpretation artefacts.",
         "Samples are clustered (e.g. in grids) and are not independent observations; transition "
         "counts are counts of samples, not area estimates.",
+        "Series 1 and Series 2 of the COS are not comparable (DGT); this table uses one series only.",
     ]
-    if merged:
-        items += [
-            "DGT states that Series 1 and Series 2 should not be compared. The merged trajectory is an "
-            "approximation: a change at the junction between series may be caused by different class "
-            "definitions, production method or mapping unit even when `series_check` = 1.",
-            "Merged classes are coarser than the original nomenclatures; Series 1 classes without a Series 2 "
-            "counterpart always appear to change at the junction.",
-        ]
-    else:
-        items.append("Series 1 and Series 2 of the COS are not comparable (DGT); this table uses one series only.")
-        if selection.crosswalks:
-            items.append("Recoding to the coarser common nomenclature removes detail present in the more "
-                         "detailed editions (e.g. all artificial surfaces become 1.0.0.0 and all pastures "
-                         "3.0.0.0, as in COS1995).")
+    if selection.crosswalks:
+        items.append("Recoding to the coarser common nomenclature removes detail present in the more "
+                     "detailed editions (e.g. all artificial surfaces become 1.0.0.0 and all pastures "
+                     "3.0.0.0, as in COS1995).")
     return "\n".join(f"- {i}" for i in items)

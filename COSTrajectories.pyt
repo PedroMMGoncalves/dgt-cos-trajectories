@@ -22,7 +22,7 @@ import sys
 import arcpy
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SERIES = ["S1", "S2", "S1+S2"]  # S1+S2: both series merged in one trajectory
+SERIES = ["S1", "S2"]  # not comparable (DGT): one series per run
 DEFAULT_THRESHOLD_M = 25.0
 
 

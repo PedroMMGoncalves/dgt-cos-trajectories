@@ -145,26 +145,11 @@ def test_group_summary():
     assert gs.loc["B", "prop_changed"] == pytest.approx(0.0)
 
 
-Y6 = [1995, 2007, 2010, 2015, 2018, 2025]
-
-
-def test_interpret_stable_change_and_artefact_flags():
-    assert metrics.interpret(["5"] * 5, YEARS_S1, 0, 0) == "stable"
-    assert metrics.interpret(["2", "5", "5", "5", "5"], YEARS_S1, 0, 0) == "change"
-    assert metrics.interpret(["2", "5", "5", "5", "5"], YEARS_S1, 0, 1) == "near_boundary"
-    assert metrics.interpret(["5", "6", "5", "5", "5"], YEARS_S1, 1, 1) == "flip_flop"
-    assert metrics.interpret([None, None, "5", None, None], YEARS_S1, 0, 0) == "insufficient_data"
-
-
-def test_interpret_series_difference_only_when_series1_shows_no_change():
-    seq = ["3", "3", "3", "3", "2", "2"]  # change into 2018, the first Series 2 edition
-    assert metrics.interpret(seq, Y6, 0, 1, junction_year=2018, check_class="3") == "series_difference"
-    # Series 1 also changed by 2018: a real change, whatever class Series 1 gives
-    assert metrics.interpret(seq, Y6, 0, 0, junction_year=2018, check_class="2") == "change"
-    assert metrics.interpret(seq, Y6, 0, 0, junction_year=2018, check_class="6") == "change"
-    assert metrics.interpret(seq, Y6, 0, 0, junction_year=2018, check_class=None) == "change"
-
-
-def test_interpret_series_switch_plus_other_change_is_not_series_difference():
-    seq = ["3", "5", "5", "5", "2", "2"]
-    assert metrics.interpret(seq, Y6, 0, 0, junction_year=2018, check_class="5") == "change"
+def test_interpret_categories_in_priority_order():
+    assert metrics.interpret(["5"] * 5, 0, 0) == "stable"
+    assert metrics.interpret(["5"] * 5, 0, 1) == "stable"
+    assert metrics.interpret(["2", "5", "5", "5", "5"], 0, 0) == "change"
+    assert metrics.interpret(["2", "5", "5", "5", "5"], 0, 1) == "near_boundary"
+    assert metrics.interpret(["5", "6", "5", "5", "5"], 1, 1) == "flip_flop"
+    assert metrics.interpret([None, None, "5", None, None], 0, 0) == "insufficient_data"
+    assert metrics.interpret(["2", None, "5"], 0, 0) == "change"

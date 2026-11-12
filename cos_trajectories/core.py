@@ -12,15 +12,6 @@ Limitations: only point samples are supported; polygon samples (dominant
 class / % area) are not. Only the COS polygons whose envelope intersects the
 bounding box of all samples (plus a buffer) are read, so samples spread over
 the whole country read most of each COS layer.
-
-Merged mode (``series="S1+S2"``): one trajectory from the Series 1 editions
-older than the first Series 2 edition followed by the Series 2 editions, in
-the merged classes of :func:`cos_trajectories.catalog.merged_classes`. The
-Series 1 map of the first Series 2 year (2018) is not part of the trajectory;
-it is classified as well (``cls_<year>_S1``) and compared with the Series 2
-map of the same year (``series_check_<year>``), so that a change at the
-junction between series that Series 1 itself does not show can be
-recognised as a difference between series (see ``metrics.interpret``).
 """
 import logging
 import platform
@@ -41,14 +32,13 @@ log = logging.getLogger("cos_trajectories")
 BBOX_BUFFER_M = 100.0
 DEFAULT_THRESHOLD_M = 25.0
 FLOAT_DECIMALS = 4  # metrics in the output tables
-MERGED = catalog.MERGED  # "S1+S2": both series merged in one trajectory
 
 
 @dataclass
 class RunResult:
     out_dir: Path
     history: pd.DataFrame
-    selection: object  # catalog.Selection or catalog.MergedSelection
+    selection: catalog.Selection
 
 
 def prepare_samples(gdf, id_field, group_field=None):
@@ -173,11 +163,9 @@ def run(cos_dir, series, samples_path, id_field, out_dir, samples_layer=None, gr
 
 
 def _select(found, series, cat):
-    if series == MERGED:
-        return catalog.select_merged(found, cat)
     if series in catalog.SERIES:
         return catalog.select(found, series, cat)
-    raise InputError(f"series must be S1, S2 or {MERGED} (both series merged), got {series!r}")
+    raise InputError(f"series must be S1 or S2, got {series!r}")
 
 
 def _classify(sel, source, samples, bbox, level, year_tag):
@@ -215,24 +203,12 @@ def _history(sel, samples, bbox, level, threshold, order):
     hist["min_boundary_dist_m"] = hist[[f"dist_{y}" for y in years]].min(axis=1, skipna=True)
     hist = metrics.compute_metrics(hist, years, threshold)
 
-    check_cols, junction_year, check_col = [], None, None
-    for s in sel.check:  # Series 1 map of a year that is in the trajectory as a Series 2 map
-        y = s.edition
-        _, cls, _ = _classify(sel, s, samples, bbox, level, y)
-        hist[f"cls_{y}_S1"] = cls
-        agree = [pd.NA if pd.isna(a) or pd.isna(b) else int(a == b) for a, b in zip(cls, hist[f"cls_{y}"])]
-        hist[f"series_check_{y}"] = pd.array(agree, dtype="Int64")
-        check_cols += [f"cls_{y}_S1", f"series_check_{y}"]
-        junction_year, check_col = y, f"cls_{y}_S1"
-        n_cmp = int(hist[f"series_check_{y}"].notna().sum())
-        log.info("%d: Series 1 and Series 2 maps give the same class at %d of %d samples", y,
-                 int(hist[f"series_check_{y}"].fillna(0).sum()), n_cmp)
-    hist["interpretation"] = metrics.interpret_table(hist, years, junction_year, check_col)
+    hist["interpretation"] = metrics.interpret_table(hist, years)
 
     hist = hist.loc[order]
     per_year = [f"{k}_{y}" for y in years for k in ("cls", "label", "poly", "dist")]
     tail = metrics.METRIC_COLUMNS + ["min_boundary_dist_m", "near_boundary", f"pts_in_poly_{years[-1]}"]
-    hist = hist[per_year + check_cols + tail + ["interpretation"]]
+    hist = hist[per_year + tail + ["interpretation"]]
     for col in ("stability_index", "modal_persistence", "time_weighted_persistence"):
         hist[col] = hist[col].round(FLOAT_DECIMALS)
     counts = {
@@ -243,9 +219,6 @@ def _history(sel, samples, bbox, level, threshold, order):
         "stable": int(hist["stable"].fillna(0).sum()),
         "flip_flop": int(hist["flip_flop"].fillna(0).sum()),
         "interpretation": {k: int((hist["interpretation"] == k).sum()) for k in metrics.INTERPRETATION},
-        "series_check": {c.rsplit("_", 1)[1]: {"compared": int(hist[c].notna().sum()),
-                                               "agree": int(hist[c].fillna(0).sum())}
-                         for c in check_cols if c.startswith("series_check_")},
     }
     return hist, labels, counts
 
@@ -261,12 +234,9 @@ def _run(cos_dir, series, samples_path, samples_layer, id_field, group_field, le
     for s, reason in sel.excluded:
         log.warning("excluded %s: %s", s.name, reason)
     years = sel.years
-    log.info("series %s, editions %s, classes: %s", sel.series, [s.name for s in sel.sources], sel.nomenclature)
+    log.info("series %s, editions %s, nomenclature %s", sel.series, [s.name for s in sel.sources], sel.nomenclature)
     for name, source in sel.crosswalk_sources(cat).items():
         log.info("correspondence %s: %s", name, source)
-    if sel.check:
-        log.info("Series 1 and Series 2 merged in one trajectory; %s used only to check the junction "
-                 "between series", [s.name for s in sel.check])
     level = sel.max_level if level is None else int(level)
     if level not in sel.levels:
         raise InputError(f"comparison level must be one of {list(sel.levels)} for series {sel.series}, "
@@ -277,7 +247,7 @@ def _run(cos_dir, series, samples_path, samples_layer, id_field, group_field, le
     sample_crs = raw.crs
     samples = prepare_samples(raw, id_field, group_field)
     log.info("%d samples read from %s", len(samples), Path(samples_path).name)
-    cos_crs = _check_cos_crs(list(sel.sources) + list(sel.check))
+    cos_crs = _check_cos_crs(sel.sources)
     if samples.crs != cos_crs:
         log.info("reprojecting samples from %s to %s", samples.crs.to_string(), cos_crs.to_string())
         samples = samples.to_crs(cos_crs)
@@ -322,7 +292,7 @@ def _run(cos_dir, series, samples_path, samples_layer, id_field, group_field, le
         "boundary_threshold_m": threshold, "out_dir": str(run_dir.resolve()),
     }
     if with_hash:
-        log.info("computing SHA-256 of %d COS files for the manifest", len(sel.sources) + len(sel.check))
+        log.info("computing SHA-256 of %d COS files for the manifest", len(sel.sources))
     manifest = report.build_manifest(
         run_id=run_id, started=started, params=params, selection=sel, ignored=ignored, cat=cat,
         samples_path=samples_path, samples_layer=samples_layer, sample_crs=sample_crs,

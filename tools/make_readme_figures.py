@@ -1,6 +1,6 @@
 """Maintainer tool: figures of the documentation from a run on ``examples/demo_points.gpkg``.
 
-Usage (from the repository root, after a merged run with ``--series S1+S2 --run-id demo``)::
+Usage (from the repository root, after a run with ``--series S1 --run-id demo``)::
 
     python tools/make_readme_figures.py 03_Resultados/demo 01_COS
 
@@ -29,7 +29,7 @@ LEVEL1 = {  # level-1 code: (colour, English name)
     "7": ("#e87ba4", "Bare / sparse"), "8": ("#8a8a85", "Wetland"), "9": ("#2a78d6", "Water"),
 }
 INK, MUTED, SURFACE = "#0b0b0b", "#52514e", "#fcfcfb"
-UNCERTAIN = ("near_boundary", "flip_flop", "series_difference")
+UNCERTAIN = ("near_boundary", "flip_flop")
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 8, "text.color": INK, "axes.edgecolor": MUTED,
                      "axes.labelcolor": MUTED, "xtick.color": MUTED, "ytick.color": MUTED,
                      "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE})
@@ -52,7 +52,7 @@ def figure_map(run_dir, cos_dir, grid, out):
     pad = 130
     view = (b[0] - pad, b[1] - pad, b[2] + pad, b[3] + pad)
     found, _ = catalog.discover(cos_dir)
-    sel = catalog.select_merged(found)
+    sel = catalog.select(found, "S1")
     fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.9), constrained_layout=True)
     present = set()
     for ax, src in zip(axes, (sel.sources[0], sel.sources[-1])):
@@ -74,7 +74,7 @@ def figure_map(run_dir, cos_dir, grid, out):
         ax.set_xlim(view[0], view[2])
         ax.set_ylim(view[1], view[3])
         ax.set_aspect("equal")
-        ax.set_title(f"COS{src.edition} (Series {src.product['series'][1]}), merged classes", fontsize=9, loc="left")
+        ax.set_title(f"COS{src.edition} (Series 1, COS1995 nomenclature)", fontsize=9, loc="left")
         ax.set_xlabel("x (m, EPSG:3763)")
         ax.ticklabel_format(style="plain", useOffset=False)
         ax.tick_params(labelsize=6.5)
@@ -84,7 +84,7 @@ def figure_map(run_dir, cos_dir, grid, out):
     handles += [
         Line2D([], [], marker="o", ls="", mfc=SURFACE, mec=INK, ms=5.5, label="interpretation: stable"),
         Line2D([], [], marker="o", ls="", mfc="#9a9994", mec=INK, ms=5.5,
-               label="near_boundary, flip_flop or series_difference"),
+               label="interpretation: near_boundary or flip_flop"),
         Line2D([], [], marker="o", ls="", mfc=INK, mec=SURFACE, ms=6.5, label="interpretation: change"),
     ]
     fig.legend(handles=handles, loc="outside lower center", ncol=4, frameon=False, fontsize=7.5)
@@ -94,27 +94,25 @@ def figure_map(run_dir, cos_dir, grid, out):
 
 def figure_trajectories(run_dir, out):
     h, _ = read_history(run_dir)
-    cols = [c for c in h.columns if c.startswith("cls_") and not c.endswith("_S1")]
-    check = [c for c in h.columns if c.startswith("cls_") and c.endswith("_S1")]
+    cols = [c for c in h.columns if c.startswith("cls_")]
     xs = {c: i for i, c in enumerate(cols)}
-    xs.update({c: len(cols) + 0.5 + i for i, c in enumerate(check)})
     right = max(xs.values()) + 1.15
     grids = sorted(h["SAMPLE_ID"].str[0].unique())
-    fig, axes = plt.subplots(1, len(grids), figsize=(12.5, 6.4), constrained_layout=True)
+    fig, axes = plt.subplots(1, len(grids), figsize=(11.0, 6.4), constrained_layout=True)
     for ax, grid in zip(axes, grids):
         d = h[h["SAMPLE_ID"].str.startswith(grid)].reset_index(drop=True)
         for i, r in d.iterrows():
             for c, x in xs.items():
                 code = r[c]
                 ax.add_patch(Rectangle((x + 0.03, i + 0.06), 0.94, 0.88, facecolor=LEVEL1[l1(code)][0],
-                                       alpha=0.38 if c in cols else 0.16, edgecolor="none"))
+                                       alpha=0.38, edgecolor="none"))
                 ax.text(x + 0.5, i + 0.5, code, ha="center", va="center", fontsize=5.4, color=INK)
             ax.text(right, i + 0.5, r["interpretation"].replace("_", " "), ha="left", va="center", fontsize=5.6,
                     color=INK if r["interpretation"] != "stable" else MUTED)
         ax.set_xlim(0, right + 2.6)
         ax.set_ylim(len(d), 0)
         ax.set_xticks([x + 0.5 for x in xs.values()])
-        ax.set_xticklabels([c.split("_")[1] + ("\nS1" if c in check else "") for c in xs], fontsize=6.5)
+        ax.set_xticklabels([c.split("_")[1] for c in xs], fontsize=6.5)
         ax.set_yticks([i + 0.5 for i in range(len(d))])
         ax.set_yticklabels(d["SAMPLE_ID"], fontsize=6)
         ax.tick_params(length=0)
@@ -122,10 +120,9 @@ def figure_trajectories(run_dir, out):
         for s in ax.spines.values():
             s.set_visible(False)
         ax.set_title(f"Grid {grid}", fontsize=9, loc="left", pad=8)
-    present = sorted({l1(c) for c in h[cols + check].values.ravel() if c})
+    present = sorted({l1(c) for c in h[cols].values.ravel() if c})
     handles = [Patch(facecolor=LEVEL1[k][0], alpha=0.38, label=f"{k} {LEVEL1[k][1]}") for k in present]
-    handles.append(Line2D([], [], ls="", label="last class column (paler): Series 1 map of 2018, check only; "
-                                               "right: interpretation"))
+    handles.append(Line2D([], [], ls="", label="right of each row: interpretation"))
     fig.legend(handles=handles, loc="outside lower center", ncol=6, frameon=False, fontsize=7.5, handlelength=1.2)
     fig.savefig(out, dpi=170)
     plt.close(fig)

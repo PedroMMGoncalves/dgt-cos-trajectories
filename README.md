@@ -15,18 +15,17 @@ category. It runs as an ArcGIS Pro toolbox or from the command line.
 | [docs/METHODS.md](docs/METHODS.md) | Mathematical definition of every calculation |
 | [docs/INTERPRETATION.md](docs/INTERPRETATION.md) | How to read and use the results |
 
-![COS polygons and sample points of one demonstration grid in 1995 and 2025](docs/img/demo_map.png)
+![COS polygons and sample points of one demonstration grid in 1995 and 2018](docs/img/demo_map.png)
 
-*Figure 1. Demonstration grid C (synthetic points, 100 m spacing) over COS1995 (Series 1) and
-COS2025 (Series 2), in merged classes. Marker fill: interpretation category of each sample.*
+*Figure 1. Demonstration grid C (synthetic points, 100 m spacing) over COS1995 and COS2018
+(Series 1, COS1995 nomenclature). Marker fill: interpretation category of each sample.*
 
-## 1. Three products
+## 1. Two products
 
 | `--series` | Editions | Period | Classes | Purpose |
 |---|---|---|---|---|
-| `S1` | COS1995v2, COS2007v3, COS2010v2, COS2015v2, COS2018v2 | 1995–2018 | COS1995 nomenclature (44 classes) | Long history within one consistent series |
+| `S1` | COS1995v2, COS2007v3, COS2010v2, COS2015v2, COS2018v2 | 1995–2018 | COS1995 nomenclature (44 classes) | Long history |
 | `S2` | COS2018v4, COS2025v1 | 2018–2025 | Series 2 nomenclature (102 classes) | Recent change at the highest thematic and geometric detail |
-| `S1+S2` | COS1995v2 … COS2015v2 (S1), then COS2018v4, COS2025v1 (S2) | 1995–2025 | Merged classes | One history over the whole period |
 
 Notes:
 
@@ -35,13 +34,11 @@ Notes:
   the same in all five editions. Without COS1995 in the folder, the 83-class nomenclature is used.
 - **`S2`.** COS2023v1 is excluded: it follows an earlier Series 2 specification in which several
   codes denote other classes, and DGT states that only COS2018v4 and COS2025v1 are comparable.
-- **`S1+S2`.** The two series have different nomenclatures. Classes that DGT relates to each other
-  (DGT 2026, Anexo 3) are grouped into merged classes, in which both series can be expressed
-  ([METHODS 2.3](docs/METHODS.md#23-series-1--series-2-merged-classes)). DGT advises against
-  comparing the two series, because definitions, production method and mapping unit differ. The
-  tool therefore also reads the Series 1 map of 2018 and uses it to recognise apparent changes at
-  2018 that are differences between the series
-  ([INTERPRETATION 4](docs/INTERPRETATION.md#4-reading-an-s1s2-result)).
+- **The series are not combined.** DGT (2026) states that maps of different series should not be
+  compared, because Series 2 changed the base concepts of the classification, the structure of the
+  nomenclature and the geometric detail. To cover 1995–2025, run both modes and join the two tables
+  by sample identifier, reading them as two separate histories
+  ([INTERPRETATION 3](docs/INTERPRETATION.md#3-choosing-the-series)).
 
 ## 2. Running
 
@@ -69,7 +66,7 @@ appear in the geoprocessing pane and the result layer is added to the map.
 
 ```shell
 python -m cos_trajectories --series S1 --samples 02_Amostras/samples.shp --id-field SAMPLE_ID
-python -m cos_trajectories --series S1+S2 --samples examples/demo_points.gpkg \
+python -m cos_trajectories --series S1 --samples examples/demo_points.gpkg \
     --samples-layer demo_points --id-field SAMPLE_ID --group-field GRID --run-id demo
 ```
 
@@ -81,11 +78,11 @@ With ArcGIS Pro installed, `python` is
 | Toolbox parameter | CLI option | Default | Description |
 |---|---|---|---|
 | COS folder | `--cos-dir` | `01_COS` | Folder with the unzipped COS GeoPackages. |
-| COS series | `--series` | required | `S1`, `S2` or `S1+S2`. |
+| COS series | `--series` | required | `S1` or `S2`. |
 | Sample points | `--samples`, `--samples-layer` | required | Point layer; shapefile or GeoPackage layer. |
 | Sample ID field | `--id-field` | required | Unique, non-empty identifier. |
 | Group field | `--group-field` | none | Adds `group_summary.csv`. |
-| Comparison level | `--level` | most detailed | 1 to 4 for `S1` and `S2`; 1 or 4 (merged classes) for `S1+S2`. |
+| Comparison level | `--level` | most detailed | 1 to 4. |
 | Boundary threshold | `--threshold` | 25 | Metres; sets `near_boundary`. |
 | Output folder | `--out-dir` | `03_Resultados` | One subfolder per run; never overwritten. |
 | (none) | `--run-id` | start time | Name of the run subfolder. |
@@ -120,8 +117,6 @@ Written to `<output folder>/<run id>/`:
 | `label_<year>` | DGT class designation. | |
 | `poly_<year>` | Polygon identifier `<year>_<DGT ID>`. | 3.3 |
 | `dist_<year>` | Distance from the point to the polygon boundary (m). | 3.4 |
-| `cls_2018_S1` | `S1+S2` only: class of the Series 1 map of 2018 (check, not part of the trajectory). | 5.2 |
-| `series_check_2018` | `S1+S2` only: 1 if the Series 1 and Series 2 maps of 2018 give the same class. | 5.2 |
 | `trajectory` | Classes in time order separated by <code>&#124;</code>; `NA` if missing. | 4.1 |
 | `n_missing` | Editions without a polygon at the point. | 4.1 |
 | `stable` | 1 if the class never changes. | 4.2 |
@@ -134,7 +129,7 @@ Written to `<output folder>/<run id>/`:
 | `min_boundary_dist_m` | Smallest `dist_<year>`. | 4.8 |
 | `near_boundary` | 1 if `min_boundary_dist_m` is below the threshold. | 4.8 |
 | `pts_in_poly_<last year>` | Samples sharing the polygon of the last edition. | 4.9 |
-| `interpretation` | `stable`, `change`, `near_boundary`, `flip_flop`, `series_difference` or `insufficient_data`. | 6 |
+| `interpretation` | `stable`, `change`, `near_boundary`, `flip_flop` or `insufficient_data`. | 5 |
 
 ### `interpretation`
 
@@ -144,7 +139,6 @@ Written to `<output folder>/<run id>/`:
 | `change` | Class changed; no artefact indicator applies. |
 | `near_boundary` | Class changed, but the point is near a polygon boundary: possibly a difference in delineation. |
 | `flip_flop` | Class changed and returned: probable interpretation artefact. |
-| `series_difference` | `S1+S2` only: the only change is at the junction between series and Series 1 shows no change. |
 | `insufficient_data` | Fewer than two editions with a class. |
 
 Use and caveats of each category: [docs/INTERPRETATION.md](docs/INTERPRETATION.md).
@@ -159,49 +153,45 @@ second command of section 2 gives:
 
 | interpretation | n_samples | share |
 |---|---|---|
-| stable | 26 | 0.347 |
-| change | 27 | 0.360 |
-| near_boundary | 17 | 0.227 |
-| flip_flop | 4 | 0.053 |
-| series_difference | 1 | 0.013 |
+| stable | 42 | 0.560 |
+| change | 17 | 0.227 |
+| near_boundary | 16 | 0.213 |
+| flip_flop | 0 | 0.000 |
 | insufficient_data | 0 | 0.000 |
 
 ![Class of each demonstration sample in every edition, with its interpretation](docs/img/demo_trajectories.png)
 
-*Figure 2. Merged class of the 75 demonstration samples in each edition of the `S1+S2` trajectory
-(colour: level-1 class), the Series 1 map of 2018 used as a check (paler column) and the
-interpretation category. Grid A: annual crops (`2.m1`) converted to olive groves (`2.m4`). Grid B:
-maritime pine (`5.1.2.1`) replaced by eucalyptus (`5.1.1.6`). Grid C: urban expansion over pasture
-and cropland.*
+*Figure 2. Class of the 75 demonstration samples in each Series 1 edition (colour: level-1 class)
+and their interpretation category. Grid A: annual crops (`2.1.1.1`) converted to olive groves
+(`2.2.3.1`). Grid B: maritime pine (`5.1.2.1`) replaced by eucalyptus (`5.1.1.5`). Grid C: urban
+expansion (`1.0.0.0`) over pasture and cropland.*
 
 Selected rows of `samples_cos_history.csv`:
 
-| SAMPLE_ID | `trajectory` | `cls_2018_S1` | `series_check_2018` | `n_changes` | `time_weighted_persistence` | `last_change_year` | `min_boundary_dist_m` | `interpretation` |
-|---|---|---|---|---|---|---|---|---|
-| B7 | <code>5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.2.1</code> | 5.1.2.1 | 1 | 0 | 1.0 | | 52.57 | stable |
-| A1 | <code>2.m1&#124;2.m1&#124;2.m1&#124;2.m1&#124;2.m4&#124;2.m4</code> | 2.m4 | 1 | 1 | 0.9 | 2018 | 157.12 | change |
-| B3 | <code>5.1.2.1&#124;5.1.1.6&#124;5.1.1.6&#124;5.1.1.6&#124;5.1.1.6&#124;5.1.1.6</code> | 5.1.1.6 | 1 | 1 | 0.6 | 2007 | 3.08 | near_boundary |
-| C3 | <code>3.1&#124;3.1&#124;1&#124;1&#124;6.1.1.1&#124;1</code> | 1 | 0 | 3 | 0.5667 | 2025 | 2.19 | flip_flop |
-| B10 | <code>5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.1.6&#124;5.1.1.6</code> | 5.1.2.1 | 0 | 1 | 0.9 | 2018 | 25.23 | series_difference |
+| SAMPLE_ID | `trajectory` | `n_changes` | `stability_index` | `time_weighted_persistence` | `last_change_year` | `min_boundary_dist_m` | `interpretation` |
+|---|---|---|---|---|---|---|---|
+| B7 | <code>5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.2.1&#124;5.1.2.1</code> | 0 | 1.0 | 1.0 | | 52.57 | stable |
+| A1 | <code>2.1.1.1&#124;2.1.1.1&#124;2.1.1.1&#124;2.1.1.1&#124;2.2.3.1</code> | 1 | 0.75 | 0.8696 | 2018 | 157.12 | change |
+| B4 | <code>5.1.2.1&#124;5.1.1.5&#124;5.1.1.5&#124;5.1.1.5&#124;5.1.1.5</code> | 1 | 0.75 | 0.4783 | 2007 | 41.81 | change |
+| B3 | <code>5.1.2.1&#124;5.1.1.5&#124;5.1.1.5&#124;5.1.1.5&#124;5.1.1.5</code> | 1 | 0.75 | 0.4783 | 2007 | 3.08 | near_boundary |
 
-- A1: the change at 2018 is shown by both series (`cls_2018_S1` = `2.m4`), far from any boundary.
-- B3: a change in 1995–2007 at 3 m from a boundary; it may be a difference in delineation.
-- C3: artificial in Series 1 since 2010, shrubland in the Series 2 map of 2018 and artificial again
-  in 2025; the shrubland step is not supported by Series 1.
-- B10: maritime pine in every Series 1 edition including 2018, eucalyptus in Series 2; the two
-  series classify the stand differently, so no change is inferred.
+- A1 and B4 have the same `stability_index` and different `time_weighted_persistence`: the change
+  of A1 falls in the 3-year interval 2015–2018 (20/23 of the period unchanged), that of B4 in the
+  12-year interval 1995–2007 (11/23).
+- B3 has the same trajectory as B4 but lies 3 m from a polygon boundary; its change may be a
+  difference in delineation.
 
 `group_summary.csv` (selected columns):
 
-| GRID | `n_points` | `n_polygons_2025` | `prop_changed` | `prop_near_boundary` | `prop_change_supported` |
+| GRID | `n_points` | `n_polygons_2018` | `prop_changed` | `prop_near_boundary` | `prop_change_supported` |
 |---|---|---|---|---|---|
-| A | 25 | 2 | 1.00 | 0.04 | 0.96 |
-| B | 25 | 7 | 0.36 | 0.60 | 0.12 |
-| C | 25 | 14 | 0.60 | 0.88 | 0.00 |
+| A | 25 | 3 | 0.48 | 0.04 | 0.48 |
+| B | 25 | 8 | 0.24 | 0.48 | 0.08 |
+| C | 25 | 12 | 0.60 | 0.72 | 0.12 |
 
-In grid A all 25 points changed, but they lie in 2 polygons: two observations of change, not 25.
-In grid C, 60 % of the points changed and none of the changes is supported, because the points
-lie close to polygon boundaries in a fragmented urban fabric.
+In grid A the 12 changed points lie in 3 polygons: they are not 12 independent observations of
+change. In grid C, 60 % of the points changed but only 12 % of the points have a supported change,
+because most lie close to polygon boundaries in a fragmented urban fabric.
 
 The figures are reproduced with `python tools/make_readme_figures.py 03_Resultados/demo 01_COS`.
 
@@ -209,15 +199,15 @@ The figures are reproduced with `python tools/make_readme_figures.py 03_Resultad
 
 - COS maps units of at least 1 ha (0.5 ha in COS2018v4/COS2025v1) and 20 m wide; the class at a
   point is that of the mapped unit.
-- Nothing before 1995 (`S1`, `S1+S2`) or 2018 (`S2`) is represented; a change is located only to
+- Nothing before 1995 (`S1`) or 2018 (`S2`) is represented; a change is located only to
   the interval between two editions.
 - Differences in polygon delineation between editions produce apparent changes near boundaries.
 - Thematic accuracy of COS is ≥ 85 % by specification; classification errors are not modelled.
 - Samples in the same polygon share its class and are not independent observations; transition
   matrices are counts of samples, not areas.
-- `S1+S2`: DGT states that the series should not be compared. The merged trajectory is an
-  approximation, merged classes are coarser than either nomenclature, and changes at 2018 are the
-  least reliable.
+- Series 1 and Series 2 are not comparable (DGT 2026) and are never combined by the tool.
+- In `S1`, recoding to the COS1995 nomenclature removes the detail of 2007–2018 for artificial
+  surfaces and pastures.
 - Only point samples are supported. Samples spread over a large extent require most of each
   national layer to be read.
 
@@ -227,7 +217,7 @@ The figures are reproduced with `python tools/make_readme_figures.py 03_Resultad
 cos_trajectories/        core package (no arcpy)
   catalog.json           COS products, nomenclatures, correspondence tables
   nomenclature/*.csv     class code -> designation
-  catalog.py             identification of editions, selection, harmonisation, merged classes
+  catalog.py             identification of editions, selection, harmonisation
   io.py                  all file reading and writing
   core.py                spatial assignment and run pipeline
   metrics.py             metrics, interpretation, transition matrices, group summary
@@ -243,14 +233,13 @@ tests/                   pytest suite on synthetic GeoPackages
 |---|---|---|
 | `catalog.discover` | Identify COS layers by file name and check their fields. | |
 | `catalog.select` | Editions and common nomenclature of one series. | 2.2 |
-| `catalog.select_merged`, `catalog.merged_classes` | Editions and merged classes for `S1+S2`. | 2.3, 5.1 |
 | `catalog.recode` | Truncation of a code to a level. | 2.1 |
 | `core.prepare_samples` | Validation of the sample layer. | |
 | `core.join_edition` | Containing polygon and distance to its boundary. | 3 |
 | `core.run` | Full pipeline. | |
 | `metrics.sample_metrics`, `metrics.compute_metrics` | Metrics per sample. | 4 |
-| `metrics.interpret`, `metrics.interpret_table` | Interpretation category. | 5.3, 6 |
-| `metrics.transition_matrix`, `metrics.group_summary` | Aggregated tables. | 7 |
+| `metrics.interpret`, `metrics.interpret_table` | Interpretation category. | 5 |
+| `metrics.transition_matrix`, `metrics.group_summary` | Aggregated tables. | 6 |
 | `report.build_manifest`, `report.data_dictionary` | Provenance and documentation of a run. | |
 
 Tests: `python -m pytest` (synthetic data; runs without ArcGIS). Adding a COS edition: add it to
@@ -268,6 +257,6 @@ the tests.
   <https://dados.gov.pt/pt/datasets/carta-de-uso-e-ocupacao-do-solo-cos-serie-2-2018v4-2025v1>
 
 COS data © Direção-Geral do Território; not distributed with this repository. The figures are
-derived from COS1995v2, COS2007v3, COS2010v2, COS2015v2, COS2018v2, COS2018v4 and COS2025v1.
+derived from COS1995v2, COS2007v3, COS2010v2, COS2015v2 and COS2018v2.
 
 Citation: [CITATION.cff](CITATION.cff). Licence: [Apache License 2.0](LICENSE).

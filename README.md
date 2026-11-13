@@ -253,6 +253,7 @@ the tests.
   <https://www.dgterritorio.gov.pt/sites/default/files/documentos-publicos/ET-COS-1995-2007-2010-2015-2018-v1.pdf>
 - Direção-Geral do Território (2026). *Especificações técnicas da Série 2 da Carta de Uso e
   Ocupação do Solo (COS) de Portugal Continental*. Relatório Técnico.
+  <https://www.dgterritorio.gov.pt/sites/default/files/documentos-publicos/COS-Serie2-EspecificacoesTecnicas-2026.pdf.pdf>
 - Direção-Geral do Território. *Carta de Uso e Ocupação do Solo (COS) – Série 2 – (2018v4 – 2025v1)*.
   <https://dados.gov.pt/pt/datasets/carta-de-uso-e-ocupacao-do-solo-cos-serie-2-2018v4-2025v1>
 

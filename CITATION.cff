@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 title: "dgt-cos-trajectories: land-use/land-cover history of sample points from the DGT COS series"
 type: software
 version: 0.1.0
-date-released: 2026-11-12
+date-released: 2026-11-13
 license: Apache-2.0
 repository-code: "https://github.com/PedroMMGoncalves/dgt-cos-trajectories"
 authors:

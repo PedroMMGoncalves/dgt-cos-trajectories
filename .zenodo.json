@@ -1,0 +1,32 @@
+{
+  "title": "dgt-cos-trajectories: land-use/land-cover history of sample points from the DGT COS series",
+  "description": "<p>ArcGIS Pro toolbox and Python command-line tool that extracts the land-use/land-cover history of point samples from the <em>Carta de Uso e Ocupação do Solo</em> (COS) of mainland Portugal, published by the Direção-Geral do Território (DGT).</p><p>For each sample point the tool reads the COS class in every edition of one COS series (Series 1: 1995–2018; Series 2: 2018–2025) and returns the class trajectory, temporal-stability metrics, the distance to the polygon boundary and an interpretation category, together with transition matrices, a provenance manifest and a data dictionary. The mathematical definitions and an interpretation guide are included in the documentation.</p><p>The COS data are not distributed with the software.</p>",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Gonçalves, Pedro",
+      "orcid": "0000-0002-6556-6086"
+    }
+  ],
+  "license": "Apache-2.0",
+  "access_right": "open",
+  "language": "eng",
+  "keywords": [
+    "land use",
+    "land cover",
+    "land-use change",
+    "trajectory analysis",
+    "COS",
+    "Carta de Uso e Ocupação do Solo",
+    "Portugal",
+    "ArcGIS Pro",
+    "Python"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/PedroMMGoncalves/dgt-cos-trajectories",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

@@ -272,9 +272,65 @@ Functions: `metrics.transition_matrix`, `metrics.group_summary`.
   `A2` < `A10`); classes in matrices are sorted by code, `NA` last.
 - File checksums in `manifest.json` are SHA-256.
 
+## 8. Sources of the definitions
+
+The quantities are of two kinds: those taken from the literature, and simple summaries defined for
+this tool. The table states which is which. A definition marked "defined here" is not attributed
+to the works cited beside it; those works are the related literature.
+
+| Quantity | Section | Status | Source or related literature |
+|---|---|---|---|
+| Hierarchical classes, truncation | 2.1 | From the data specification | DGT (2022, 2026) |
+| Recoding to the COS1995 nomenclature | 2.2 | From the data specification | DGT (2022), Anexo 3 |
+| Series not combined | 2.3 | From the data specification | DGT (2026) |
+| Point-in-polygon assignment, boundary, distance | 3.3, 3.4 | Standard geometric operations | Herring (2011) |
+| Lowest-ID rule for points on a shared edge | 3.3 | Defined here | |
+| Trajectory (sequence of classes per location) | 4.1 | From the literature | Mertens and Lambin (2000); Swetnam (2007) |
+| Number of changes $`N`$ | 4.3 | From the literature | Pontius et al. (2017), who count the times the category of a unit changes across time intervals; Swetnam (2007) uses a turnover index |
+| Simple stability $`S`$, stability index $`SI`$ | 4.2, 4.3 | Defined here, as normalisations of $`N`$ | Pontius et al. (2017) |
+| Modal persistence $`P`$ | 4.4 | Defined here | Pontius et al. (2017) summarise the same aspect by the number of categories a unit occupies |
+| Time-weighted persistence $`P_w`$ | 4.5 | Defined here | The weighting by interval duration follows the reasoning of Aldwaik and Pontius (2012), who express change per year so that intervals of unequal duration are comparable |
+| Flip-flop $`F`$ | 4.7 | Defined here | Pontius and Lippitt (2006) and Pontius et al. (2017) on telling real change from map error |
+| Boundary distance and `near_boundary` | 4.8 | Defined here | Threshold derived from the COS specification, DGT (2022, 2026); Pontius and Lippitt (2006) on map error as a cause of apparent change |
+| Samples per polygon | 4.9 | Defined here | Hurlbert (1984) on non-independent replicates |
+| Interpretation category | 5 | Defined here | Decision rule combining 4.3, 4.7 and 4.8 |
+| Transition matrix; diagonal as persistence | 6.1 | From the literature | Pontius et al. (2004) |
+| Counts of samples are not area estimates | 6.1 | From the literature | Olofsson et al. (2014) |
+| Group proportions | 6.3 | Defined here | |
+
+Intensity analysis (Aldwaik and Pontius 2012) is not computed: it applies to cross-tabulation
+matrices that represent areas, which counts of clustered sample points do not.
+
 ## References
 
+- Aldwaik, S. Z. and Pontius, R. G. Jr. (2012). Intensity analysis to unify measurements of size
+  and stationarity of land changes by interval, category, and transition. *Landscape and Urban
+  Planning*, 106(1), 103–114. <https://doi.org/10.1016/j.landurbplan.2012.02.010>
 - Direção-Geral do Território (2022). *Especificações técnicas da Carta de Uso e Ocupação do Solo
   (COS) de Portugal Continental para 1995, 2007, 2010, 2015 e 2018*. Relatório Técnico.
+  <https://www.dgterritorio.gov.pt/sites/default/files/documentos-publicos/ET-COS-1995-2007-2010-2015-2018-v1.pdf>
 - Direção-Geral do Território (2026). *Especificações técnicas da Série 2 da Carta de Uso e
   Ocupação do Solo (COS) de Portugal Continental*. Relatório Técnico.
+- Herring, J. R. (ed.) (2011). *OpenGIS Implementation Standard for Geographic information – Simple
+  feature access – Part 1: Common architecture*, version 1.2.1. Open Geospatial Consortium,
+  document 06-103r4.
+- Hurlbert, S. H. (1984). Pseudoreplication and the design of ecological field experiments.
+  *Ecological Monographs*, 54(2), 187–211. <https://doi.org/10.2307/1942661>
+- Mertens, B. and Lambin, E. F. (2000). Land-cover-change trajectories in southern Cameroon.
+  *Annals of the Association of American Geographers*, 90(3), 467–494.
+  <https://doi.org/10.1111/0004-5608.00205>
+- Olofsson, P., Foody, G. M., Herold, M., Stehman, S. V., Woodcock, C. E. and Wulder, M. A. (2014).
+  Good practices for estimating area and assessing accuracy of land change. *Remote Sensing of
+  Environment*, 148, 42–57. <https://doi.org/10.1016/j.rse.2014.02.015>
+- Pontius, R. G. Jr., Krithivasan, R., Sauls, L., Yan, Y. and Zhang, Y. (2017). Methods to
+  summarize change among land categories across time intervals. *Journal of Land Use Science*,
+  12(4), 218–230. <https://doi.org/10.1080/1747423X.2017.1338768>
+- Pontius, R. G. Jr. and Lippitt, C. D. (2006). Can error explain map differences over time?
+  *Cartography and Geographic Information Science*, 33(2), 159–171.
+  <https://doi.org/10.1559/152304006777681706>
+- Pontius, R. G. Jr., Shusas, E. and McEachern, M. (2004). Detecting important categorical land
+  changes while accounting for persistence. *Agriculture, Ecosystems and Environment*, 101(2–3),
+  251–268. <https://doi.org/10.1016/j.agee.2003.09.008>
+- Swetnam, R. D. (2007). Rural land use in England and Wales between 1930 and 1998: Mapping
+  trajectories of change with a high resolution spatio-temporal dataset. *Landscape and Urban
+  Planning*, 81(1–2), 91–103. <https://doi.org/10.1016/j.landurbplan.2006.10.013>

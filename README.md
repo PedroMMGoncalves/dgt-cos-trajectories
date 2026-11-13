@@ -256,6 +256,8 @@ the tests.
 - Direção-Geral do Território. *Carta de Uso e Ocupação do Solo (COS) – Série 2 – (2018v4 – 2025v1)*.
   <https://dados.gov.pt/pt/datasets/carta-de-uso-e-ocupacao-do-solo-cos-serie-2-2018v4-2025v1>
 
+The literature behind each formula is listed in [docs/METHODS.md](docs/METHODS.md#8-sources-of-the-definitions).
+
 COS data © Direção-Geral do Território; not distributed with this repository. The figures are
 derived from COS1995v2, COS2007v3, COS2010v2, COS2015v2 and COS2018v2.
 

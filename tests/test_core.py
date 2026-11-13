@@ -289,6 +289,6 @@ def test_shapefile_names_long_id_field_is_shortened_without_collision():
 
 
 def test_output_names_carry_sample_layer_and_series():
-    assert core.output_base_name("C:/data/Matrix_FineScale_Spr25_V2.shp", None, "S1") == "Matrix_FineScale_Spr25_V2_COS_S1"
+    assert core.output_base_name("C:/data/field_plots_2025.shp", None, "S1") == "field_plots_2025_COS_S1"
     assert core.output_base_name("C:/data/all.gpkg", "plots 2025", "S2") == "plots_2025_COS_S2"
     assert core.output_base_name("C:/data/amostras (v2).shp", None, "S2") == "amostras_v2_COS_S2"

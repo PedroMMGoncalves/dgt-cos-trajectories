@@ -121,14 +121,14 @@ def test_run_writes_all_outputs(project):
     res = _run(project)
     names = sorted(p.name for p in res.out_dir.iterdir())
     assert names == ["data_dictionary.md", "group_summary.csv", "interpretation_summary.csv", "manifest.json",
-                     "pts_COS_S1.cpg", "pts_COS_S1.csv", "pts_COS_S1.dbf", "pts_COS_S1.gpkg", "pts_COS_S1.prj",
-                     "pts_COS_S1.shp", "pts_COS_S1.shx", "pts_COS_S1.xlsx", "run.log",
+                     "pts_COS_S1_L4.cpg", "pts_COS_S1_L4.csv", "pts_COS_S1_L4.dbf", "pts_COS_S1_L4.gpkg", "pts_COS_S1_L4.prj",
+                     "pts_COS_S1_L4.shp", "pts_COS_S1_L4.shx", "pts_COS_S1_L4.xlsx", "run.log",
                      "transitions_1995_2007.csv", "transitions_2007_2018.csv"]
 
 
 def test_run_history_rows_columns_and_harmonisation(project):
     res = _run(project)
-    h = pd.read_csv(res.out_dir / "pts_COS_S1.csv", dtype={"cls_1995": str, "cls_2007": str,
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L4.csv", dtype={"cls_1995": str, "cls_2007": str,
                                                                     "cls_2018": str})
     assert list(h["SAMPLE_ID"]) == ["A2", "A10", "B1", "B2", "C1"]  # natural sort
     assert "pH" not in h.columns and "quad" not in h.columns
@@ -147,7 +147,7 @@ def test_run_history_rows_columns_and_harmonisation(project):
 
 def test_run_comparison_level(project):
     res = _run(project, level=1)
-    h = pd.read_csv(res.out_dir / "pts_COS_S1.csv", dtype=str).set_index("SAMPLE_ID")
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L1.csv", dtype=str).set_index("SAMPLE_ID")
     assert h.loc["A10", "trajectory"] == "2|2|5"
     assert h.loc["A10", "label_1995"] == "Agricultura"
 
@@ -202,7 +202,7 @@ def test_run_dictionary_opens_with_boundary_warning(project):
 
 def test_run_gpkg_has_geometry_and_same_rows(project):
     res = _run(project)
-    g = gpd.read_file(res.out_dir / "pts_COS_S1.gpkg", engine="fiona")
+    g = gpd.read_file(res.out_dir / "pts_COS_S1_L4.gpkg", engine="fiona")
     assert len(g) == 5 and g.crs.to_epsg() == 3763
     assert list(g["SAMPLE_ID"]) == ["A2", "A10", "B1", "B2", "C1"]
 
@@ -213,7 +213,7 @@ def test_run_reprojects_geographic_samples(project, tmp_path):
     samples = write_samples(tmp_path / "geo.gpkg", [(p.x, p.y) for p in pts], ["x1", "x2"],
                             crs="EPSG:4326", layer="pts")
     res = _run(project, samples_path=samples, samples_layer="pts", group_field=None)
-    h = pd.read_csv(res.out_dir / "pts_COS_S1.csv", dtype=str).set_index("SAMPLE_ID")
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L4.csv", dtype=str).set_index("SAMPLE_ID")
     assert h.loc["x1", "cls_1995"] == "2.1.1.1"
     assert h.loc["x2", "cls_1995"] == "3.0.0.0"
 
@@ -233,7 +233,7 @@ def test_run_refuses_existing_output_folder(project):
 
 def test_run_interpretation_column_and_summary(project):
     res = _run(project)
-    h = pd.read_csv(res.out_dir / "pts_COS_S1.csv", dtype=str, keep_default_na=False).set_index("SAMPLE_ID")
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L4.csv", dtype=str, keep_default_na=False).set_index("SAMPLE_ID")
     assert h.loc["A2", "interpretation"] == "stable"
     assert h.loc["A10", "interpretation"] == "change"            # 30 m from the boundary
     assert h.loc["B2", "interpretation"] == "near_boundary"      # on the shared edge, class changed
@@ -254,7 +254,7 @@ def test_run_rejects_series_other_than_s1_s2(project):
 
 def test_shapefile_field_names_are_short_unique_and_documented(project):
     res = _run(project)
-    g = gpd.read_file(res.out_dir / "pts_COS_S1.shp", engine="fiona")
+    g = gpd.read_file(res.out_dir / "pts_COS_S1_L4.shp", engine="fiona")
     fields = [c for c in g.columns if c != "geometry"]
     assert all(len(f) <= 10 for f in fields) and len(set(fields)) == len(fields)
     for f in ("SAMPLE_ID", "cls_1995", "label_2018", "trajectory", "n_changes", "stab_index", "modal_pers",
@@ -270,8 +270,8 @@ def test_shapefile_field_names_are_short_unique_and_documented(project):
 
 def test_excel_has_the_same_table_as_the_csv(project):
     res = _run(project)
-    x = pd.read_excel(res.out_dir / "pts_COS_S1.xlsx", dtype=str)
-    c = pd.read_csv(res.out_dir / "pts_COS_S1.csv", dtype=str)
+    x = pd.read_excel(res.out_dir / "pts_COS_S1_L4.xlsx", dtype=str)
+    c = pd.read_csv(res.out_dir / "pts_COS_S1_L4.csv", dtype=str)
     assert list(x.columns) == list(c.columns)
     assert list(x["SAMPLE_ID"]) == list(c["SAMPLE_ID"])
     assert x.set_index("SAMPLE_ID").loc["A10", "trajectory"] == "2.1.1.1|2.1.1.1|5.1.1.7"
@@ -288,7 +288,57 @@ def test_shapefile_names_long_id_field_is_shortened_without_collision():
     assert all(len(v) <= 10 for v in short) and len(set(short)) == len(short)
 
 
-def test_output_names_carry_sample_layer_and_series():
-    assert core.output_base_name("C:/data/field_plots_2025.shp", None, "S1") == "field_plots_2025_COS_S1"
-    assert core.output_base_name("C:/data/all.gpkg", "plots 2025", "S2") == "plots_2025_COS_S2"
-    assert core.output_base_name("C:/data/amostras (v2).shp", None, "S2") == "amostras_v2_COS_S2"
+def test_output_names_carry_sample_layer_series_and_level():
+    assert core.output_base_name("C:/data/field_plots_2025.shp", None, "S1", 4) == "field_plots_2025_COS_S1_L4"
+    assert core.output_base_name("C:/data/all.gpkg", "plots 2025", "S2", 2) == "plots_2025_COS_S2_L2"
+    assert core.output_base_name("C:/data/amostras (v2).shp", None, "S2", 1) == "amostras_v2_COS_S2_L1"
+
+
+# --- all levels side by side ---------------------------------------------------------
+
+@pytest.fixture
+def vineyard_to_olive(tmp_path):
+    cos = tmp_path / "01_COS"
+    cos.mkdir()
+    sq = two_halves()
+    write_cos(cos / "COS2015v2-S1.gpkg", "COS2015v2", sq, ["2.2.1.1", "5.1.1.1"])
+    write_cos(cos / "COS2018v2-S1.gpkg", "COS2018v2", sq, ["2.2.3.1", "6.1.1.1"])
+    samples = write_samples(tmp_path / "pts.shp", [(30, 50), (150, 50)], ["P1", "P2"])
+    return tmp_path, cos, samples
+
+
+def test_classes_of_every_level_are_written_side_by_side(vineyard_to_olive):
+    res = _run(vineyard_to_olive, group_field=None)
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L4.csv", dtype=str).set_index("SAMPLE_ID")
+    assert [h.loc["P1", f"cls_2015_L{k}"] for k in (1, 2, 3, 4)] == ["2", "2.2", "2.2.1", "2.2.1.1"]
+    assert [h.loc["P1", f"cls_2018_L{k}"] for k in (1, 2, 3, 4)] == ["2", "2.2", "2.2.3", "2.2.3.1"]
+    assert h.loc["P1", "cls_2018"] == h.loc["P1", "cls_2018_L4"]
+    assert h.columns[-1] == "interpretation"
+
+
+def test_number_of_changes_per_level(vineyard_to_olive):
+    res = _run(vineyard_to_olive, group_field=None)
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L4.csv", dtype=str).set_index("SAMPLE_ID")
+    # P1 vineyard -> olive grove: a change only below level 2
+    assert [h.loc["P1", f"n_changes_L{k}"] for k in (1, 2, 3, 4)] == ["0", "0", "1", "1"]
+    # P2 forest -> shrubland: a change at every level
+    assert [h.loc["P2", f"n_changes_L{k}"] for k in (1, 2, 3, 4)] == ["1", "1", "1", "1"]
+    assert h.loc["P1", "n_changes"] == h.loc["P1", "n_changes_L4"]
+
+
+def test_metrics_follow_the_chosen_level_while_all_levels_are_kept(vineyard_to_olive):
+    res = _run(vineyard_to_olive, group_field=None, level=2)
+    h = pd.read_csv(res.out_dir / "pts_COS_S1_L2.csv", dtype=str).set_index("SAMPLE_ID")
+    assert h.loc["P1", "trajectory"] == "2.2|2.2" and h.loc["P1", "interpretation"] == "stable"
+    assert h.loc["P1", "n_changes"] == "0" and h.loc["P1", "n_changes_L4"] == "1"
+    assert h.loc["P1", "cls_2018_L4"] == "2.2.3.1"
+
+
+def test_level_columns_have_short_shapefile_names(vineyard_to_olive):
+    res = _run(vineyard_to_olive, group_field=None)
+    g = gpd.read_file(res.out_dir / "pts_COS_S1_L4.shp", engine="fiona")
+    for f in ("c2015_L1", "c2018_L4", "n_chg_L1", "n_chg_L4"):
+        assert f in g.columns, f
+    assert all(len(c) <= 10 for c in g.columns if c != "geometry")
+    text = (res.out_dir / "data_dictionary.md").read_text(encoding="utf-8")
+    assert "`cls_<year>_L<k>`" in text and "`n_changes_L<k>`" in text

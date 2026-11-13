@@ -1,6 +1,6 @@
 # Interpreting the results
 
-A guide to reading `<samples>_COS_<series>.csv` and the files written with it. Definitions and
+A guide to reading `<samples>_COS_<series>_L<level>.csv` and the files written with it. Definitions and
 formulas are in [METHODS.md](METHODS.md).
 
 ## 1. Start with `interpretation`
@@ -55,7 +55,28 @@ as two histories:
 - do not count a change from the last `S1` class to the first `S2` class;
 - metrics and `interpretation` of one run say nothing about the period of the other.
 
-## 4. Common mistakes
+## 4. Levels of detail
+
+COS classes are nested in four levels: `2` Agricultura contains `2.2` Culturas permanentes, which
+contains `2.2.3` Olivais. Every run writes the class at all four levels (`cls_<year>_L1` to
+`cls_<year>_L4`) and the number of changes at each (`n_changes_L1` to `n_changes_L4`).
+
+| `n_changes_L1` | `n_changes_L4` | Reading |
+|---|---|---|
+| 0 | 0 | No change at any level. |
+| 0 | > 0 | Change within a broad class, for example vineyard to olive grove, both Agricultura. |
+| > 0 | > 0 | Change between broad classes, for example shrubland to agriculture. |
+
+Changes between broad classes are the most robust: broad classes are the least affected by
+differences of interpretation between editions. Changes that exist only at levels 3 or 4 depend on
+finer distinctions and deserve more caution.
+
+The metrics and `interpretation` refer to one level, the comparison level of the run, which is in
+the file name (`_L4`) and in `manifest.json`. To have them at another level, run the tool again
+with that level. In `S1` the levels follow the COS1995 nomenclature, in which artificial surfaces
+and pastures are a single class at every level.
+
+## 5. Common mistakes
 
 - **Counting every changed sample as a land-use change.** Use `interpretation = change`; treat
   `near_boundary` and `flip_flop` as uncertain.
@@ -71,10 +92,10 @@ as two histories:
 - **Comparing an `S1` result with an `S2` result as if they were one series.** See section 3.
 - **Dating a change to a year.** `last_change_year = 2007` means between 1995 and 2007.
 
-## 5. A possible analysis sequence
+## 6. A possible analysis sequence
 
 1. Open `interpretation_summary.csv`: how many samples are stable, changed, uncertain.
-2. Join `<samples>_COS_<series>.csv` to the sample table by the identifier.
+2. Join `<samples>_COS_<series>_L<level>.csv` to the sample table by the identifier.
 3. Use `interpretation` as a grouping factor, keeping `stable` and `change` as the reliable groups.
 4. Within `change`, group by `trajectory` or by the first and last class.
 5. Account for shared polygons (`poly_<last year>`) when samples are treated as replicates.

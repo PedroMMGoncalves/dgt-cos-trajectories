@@ -54,8 +54,8 @@ SHAPEFILE_NAMES = {  # columns longer than the 10 characters a shapefile field n
 }
 
 
-def output_base_name(samples_path, samples_layer, series):
-    """Base name of the result tables: ``<sample layer name>_COS_<series>``.
+def output_base_name(samples_path, samples_layer, series, level):
+    """Base name of the result tables: ``<sample layer name>_COS_<series>_L<level>``.
 
     The sample layer name is the GeoPackage layer if one is given, otherwise
     the file name without extension; characters other than letters, digits,
@@ -63,14 +63,22 @@ def output_base_name(samples_path, samples_layer, series):
     """
     source = samples_layer or Path(samples_path).stem
     source = re.sub(r"[^0-9A-Za-z_-]+", "_", source).strip("_") or "samples"
-    return f"{source}_COS_{series}"
+    return f"{source}_COS_{series}_L{level}"
 
 
 def shapefile_field_names(columns):
     """``{column: field name of at most 10 characters}``, unique, in the order of ``columns``."""
     out, used = {}, set()
     for col in columns:
-        name = SHAPEFILE_NAMES.get(col, "pts_in_pol" if col.startswith("pts_in_poly_") else col[:10])
+        m = re.fullmatch(r"cls_(\d{4})_L(\d)", col)
+        if m:
+            name = f"c{m.group(1)}_L{m.group(2)}"
+        elif col.startswith("n_changes_L"):
+            name = "n_chg_L" + col[len("n_changes_L"):]
+        elif col.startswith("pts_in_poly_"):
+            name = "pts_in_pol"
+        else:
+            name = SHAPEFILE_NAMES.get(col, col[:10])
         n = 1
         while name in used:  # collision after shortening: number the last characters
             n += 1
@@ -207,8 +215,8 @@ def _select(found, series, cat):
     raise InputError(f"series must be S1 or S2, got {series!r}")
 
 
-def _classify(sel, source, samples, bbox, level, year_tag):
-    """Join one edition; returns (join table, class codes at ``level``, n shared-edge points)."""
+def _classify(sel, source, samples, bbox, year_tag):
+    """Join one edition; returns (join table, harmonised level-4 codes, n shared-edge points)."""
     cos = io.read_layer(source.path, layer=source.layer, bbox=bbox, columns=[source.id_field, source.code_field])
     log.info("%s: %d polygons read around the samples", source.name, len(cos))
     j, n_shared = join_edition(samples, cos, source.code_field, source.id_field, year_tag)
@@ -218,8 +226,8 @@ def _classify(sel, source, samples, bbox, level, year_tag):
     n_out = int(j["code"].isna().sum())
     if n_out:
         log.warning("%s: %d sample(s) outside every COS polygon", source.name, n_out)
-    cls = [pd.NA if pd.isna(c) else catalog.recode(sel.harmonise(c, source), level) for c in j["code"]]
-    return j, pd.Series(pd.array(cls, dtype="object"), index=samples.index), n_shared
+    code4 = [pd.NA if pd.isna(c) else sel.harmonise(c, source) for c in j["code"]]
+    return j, pd.Series(pd.array(code4, dtype="object"), index=samples.index), n_shared
 
 
 def _history(sel, samples, bbox, level, threshold, order):
@@ -227,10 +235,13 @@ def _history(sel, samples, bbox, level, threshold, order):
     years = sel.years
     labels = sel.labels()
     hist = pd.DataFrame(index=samples.index)
-    shared, missing_labels = {}, set()
+    shared, missing_labels, by_level = {}, set(), {}
     for s in sel.sources:
         y = s.edition
-        j, cls, shared[str(y)] = _classify(sel, s, samples, bbox, level, y)
+        j, code4, shared[str(y)] = _classify(sel, s, samples, bbox, y)
+        for k in sel.levels:  # class at every level, side by side
+            by_level[f"cls_{y}_L{k}"] = code4.map(lambda c, k=k: c if pd.isna(c) else catalog.recode(c, k))
+        cls = by_level[f"cls_{y}_L{level}"]
         missing_labels.update(c for c in cls.dropna() if (level, c) not in labels)
         hist[f"cls_{y}"] = cls
         hist[f"label_{y}"] = pd.array([pd.NA if pd.isna(c) else labels.get((level, c), pd.NA) for c in cls],
@@ -243,11 +254,19 @@ def _history(sel, samples, bbox, level, threshold, order):
     hist = metrics.compute_metrics(hist, years, threshold)
 
     hist["interpretation"] = metrics.interpret_table(hist, years)
+    levels = pd.DataFrame(by_level, index=hist.index)
+    for k in sel.levels:  # number of changes at every level
+        n = [metrics.sample_metrics([r[f"cls_{y}_L{k}"] for y in years], years)["n_changes"]
+             for r in levels.to_dict("records")]
+        levels[f"n_changes_L{k}"] = pd.array(n, dtype="Int64")
+    hist = pd.concat([hist, levels], axis=1)
 
     hist = hist.loc[order]
     per_year = [f"{k}_{y}" for y in years for k in ("cls", "label", "poly", "dist")]
     tail = metrics.METRIC_COLUMNS + ["min_boundary_dist_m", "near_boundary", f"pts_in_poly_{years[-1]}"]
-    hist = hist[per_year + tail + ["interpretation"]]
+    level_cls = [f"cls_{y}_L{k}" for y in years for k in sel.levels]
+    level_n = [f"n_changes_L{k}" for k in sel.levels]
+    hist = hist[per_year + level_cls + tail + level_n + ["interpretation"]]
     for col in ("stability_index", "modal_persistence", "time_weighted_persistence"):
         hist[col] = hist[col].round(FLOAT_DECIMALS)
     counts = {
@@ -298,7 +317,7 @@ def _run(cos_dir, series, samples_path, samples_layer, id_field, group_field, le
     hist.index.name = id_field
     table = hist.reset_index()
 
-    base = output_base_name(samples_path, samples_layer, sel.series)
+    base = output_base_name(samples_path, samples_layer, sel.series, level)
     io.write_csv(table, run_dir / f"{base}.csv")
     geo = gpd.GeoDataFrame(table, geometry=samples.geometry.loc[order].values, crs=samples.crs)
     io.write_gpkg(geo, run_dir / f"{base}.gpkg", layer=base)

@@ -139,6 +139,8 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
         ("dist", "Distance from the point to the edge of its COS polygon.", "m"),
     ):
         cols.append([f"`{k}_<year>`", d, t])
+    cols.append(["`cls_<year>_L<k>`", "Class code at each level k = 1 (broadest) to 4 (most detailed), whatever "
+                 "the comparison level of the run. `cls_<year>` equals the column of the comparison level.", "text"])
     cols += [
         ["`trajectory`", "Classes in time order joined by `|`; `NA` = no polygon in that edition.", "text"],
         ["`n_missing`", "Editions without a COS polygon at the point.", "count"],
@@ -158,16 +160,31 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
         ["`min_boundary_dist_m`", "Smallest `dist_<year>` over all editions.", "m"],
         ["`near_boundary`", f"1 if `min_boundary_dist_m` < {thr} m. See the warning at the top.", "0/1"],
         [f"`pts_in_poly_{last}`", f"Number of samples in the same COS polygon in {last}.", "count"],
+        ["`n_changes_L<k>`", "Number of changes when the classes are compared at level k. A change that is "
+                             "also counted at level 1 is a change between broad classes (e.g. agriculture to "
+                             "shrubland); one counted only at levels 3 or 4 is a change within a broad class "
+                             "(e.g. vineyard to olive grove).", "count"],
         ["`interpretation`", "Summary category; see “How to read the results”.", "text"],
     ]
     out += ["## Columns of `samples_cos_history.csv`",
             f"`<year>` is each edition year: {', '.join(map(str, years))}.",
             _table(["Column", "Meaning", "Unit"], cols),
+            f"The metrics and `interpretation` are computed at the comparison level of the run (level {level}); "
+            "only `n_changes_L<k>` is given for every level.",
             "Metrics use only the *observed* editions (those where the point falls in a COS polygon). "
             "With fewer than two observed editions the change-based metrics are empty. No composite "
             "index is given: each metric answers a different question."]
     if shapefile_names:
-        short = [[f"`{k}`", f"`{v}`"] for k, v in shapefile_names.items() if k != v]
+        import re
+        seen, short = set(), []
+        for k, v in shapefile_names.items():
+            if k == v:
+                continue
+            gk = re.sub(r"\d{4}", "<year>", re.sub(r"_L\d$", "_L<k>", k))
+            gv = re.sub(r"\d{4}", "<year>", re.sub(r"_L\d$", "_L<k>", v))
+            if gk not in seen:
+                seen.add(gk)
+                short.append([f"`{gk}`", f"`{gv}`"])
         out += ["## Shapefile field names",
                 "A shapefile allows field names of at most 10 characters. Columns not listed keep their name. "
                 "Empty numeric values may be shown as 0 by some programs when reading the shapefile; the "

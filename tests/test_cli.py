@@ -18,7 +18,7 @@ def test_cli_runs_and_writes_run_folder(tmp_path, capsys):
                      "--out-dir", str(out), "--level", "2", "--no-hash"])
     assert code == 0
     runs = list(out.iterdir())
-    assert len(runs) == 1 and (runs[0] / "pts_COS_S1.csv").exists()
+    assert len(runs) == 1 and (runs[0] / "pts_COS_S1_L2.csv").exists()
     assert str(runs[0]) in capsys.readouterr().out
 
 

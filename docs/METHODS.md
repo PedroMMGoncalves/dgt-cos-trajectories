@@ -28,6 +28,10 @@ The class at level $`L`$ is the prefix
 \mathrm{trunc}_L(k) = (k^1,\dots,k^L), \qquad L \in \lbrace 1,2,3,4 \rbrace .
 ```
 
+Each run has one comparison level $`L`$, at which the metrics of section 4 and the interpretation
+of section 5 are computed. In addition, the class at every level is written
+(`cls_<year>_L<k>`, $`k = 1,\dots,4`$).
+
 Function: `catalog.recode`.
 
 ### 2.2 Series 1: recoding to the COS1995 nomenclature
@@ -130,6 +134,17 @@ N = \sum_{t=2}^{T} \mathbb{1}\left[ c_t \neq c_{t-1} \right], \qquad SI = 1 - \f
 
 Columns `n_changes` and `stability_index`. $`SI = 1`$ means the point never changed; $`SI = 0`$
 means it changed at every edition.
+
+The number of changes is also given for every level $`k`$ (columns `n_changes_L<k>`):
+
+```math
+N^{(k)} = \sum_{t=2}^{T} \mathbb{1}\left[ \mathrm{trunc}_k(c_t) \neq \mathrm{trunc}_k(c_{t-1}) \right], \qquad N^{(1)} \leq N^{(2)} \leq N^{(3)} \leq N^{(4)}
+```
+
+A change between two classes at level $`k`$ is also a change at every more detailed level, hence
+the ordering. $`N^{(1)} > 0`$ indicates a change between broad classes (for example agriculture to
+shrubland); $`N^{(1)} = 0`$ with $`N^{(4)} > 0`$ indicates a change within a broad class (for
+example vineyard to olive grove).
 
 ### 4.4 Modal persistence
 

@@ -3,7 +3,10 @@
 ## 0.2.0 (2026-11-13)
 
 - Result table also written as a shapefile and as an Excel workbook.
-- Result tables named after the sample layer and the series: `<samples>_COS_<series>`
+- Classes at all four levels (`cls_<year>_L<k>`) and number of changes per level
+  (`n_changes_L<k>`) written in every run.
+- Result tables named after the sample layer, the series and the comparison level:
+  `<samples>_COS_<series>_L<level>`
   (`.xlsx`, `.csv`, `.gpkg`, `.shp`). Shapefile field names are shortened to 10 characters
   with a fixed mapping, listed in the data dictionary.
 - Affiliation, DOI and badges added to the metadata and README.

@@ -91,7 +91,7 @@ With ArcGIS Pro installed, `python` is
 | Sample points | `--samples`, `--samples-layer` | required | Point layer; shapefile or GeoPackage layer. |
 | Sample ID field | `--id-field` | required | Unique, non-empty identifier. |
 | Group field | `--group-field` | none | Adds `group_summary.csv`. |
-| Comparison level | `--level` | most detailed | 1 to 4. |
+| Comparison level | `--level` | most detailed | 1 to 4; level at which the metrics and the interpretation are computed. The classes and the number of changes are written for all four levels in every run. |
 | Boundary threshold | `--threshold` | 25 | Metres; sets `near_boundary`. |
 | Output folder | `--out-dir` | `03_Resultados` | One subfolder per run; never overwritten. |
 | (none) | `--run-id` | start time | Name of the run subfolder. |
@@ -102,15 +102,15 @@ level, fewer than two editions) stops the run with a message; exit code 2.
 
 ## 3. Outputs
 
-Written to `<output folder>/<run id>/`. `<samples>` is the name of the sample layer and `<series>`
-is `S1` or `S2`, for example `plots_COS_S1.shp`:
+Written to `<output folder>/<run id>/`. `<samples>` is the name of the sample layer, `<series>`
+is `S1` or `S2` and `<level>` the comparison level, for example `plots_COS_S1_L4.shp`:
 
 | File | Content |
 |---|---|
-| `<samples>_COS_<series>.xlsx` | One row per sample (Excel). |
-| `<samples>_COS_<series>.csv` | Same table as text (UTF-8). |
-| `<samples>_COS_<series>.gpkg` | Same table with point geometry (EPSG:3763); full field names. |
-| `<samples>_COS_<series>.shp` | Same table as a shapefile; field names shortened to 10 characters (listed in `data_dictionary.md`). |
+| `<samples>_COS_<series>_L<level>.xlsx` | One row per sample (Excel). |
+| `<samples>_COS_<series>_L<level>.csv` | Same table as text (UTF-8). |
+| `<samples>_COS_<series>_L<level>.gpkg` | Same table with point geometry (EPSG:3763); full field names. |
+| `<samples>_COS_<series>_L<level>.shp` | Same table as a shapefile; field names shortened to 10 characters (listed in `data_dictionary.md`). |
 | `interpretation_summary.csv` | Number and share of samples per interpretation category. |
 | `transitions_<a>_<b>.csv` | Samples per class in edition `a` (rows) and edition `b` (columns), consecutive editions. |
 | `group_summary.csv` | One row per group, if a group field is given. |
@@ -118,7 +118,7 @@ is `S1` or `S2`, for example `plots_COS_S1.shp`:
 | `manifest.json` | Parameters, input files with SHA-256, software versions, counts. |
 | `run.log` | Processing messages. |
 
-### Fields of `<samples>_COS_<series>`
+### Fields of `<samples>_COS_<series>_L<level>`
 
 `<year>` is each edition year of the trajectory. Formulas: [docs/METHODS.md](docs/METHODS.md).
 
@@ -127,6 +127,7 @@ is `S1` or `S2`, for example `plots_COS_S1.shp`:
 | *identifier* | Sample identifier, with the name it has in the input layer. | |
 | `cls_<year>` | Class code at the comparison level. Empty if no polygon contains the point. | 2, 3.3 |
 | `label_<year>` | DGT class designation. | |
+| `cls_<year>_L<k>` | Class code at every level k = 1 to 4, whatever the comparison level. | 2.1 |
 | `poly_<year>` | Polygon identifier `<year>_<DGT ID>`. | 3.3 |
 | `dist_<year>` | Distance from the point to the polygon boundary (m). | 3.4 |
 | `trajectory` | Classes in time order separated by <code>&#124;</code>; `NA` if missing. | 4.1 |
@@ -141,6 +142,7 @@ is `S1` or `S2`, for example `plots_COS_S1.shp`:
 | `min_boundary_dist_m` | Smallest `dist_<year>`. | 4.8 |
 | `near_boundary` | 1 if `min_boundary_dist_m` is below the threshold. | 4.8 |
 | `pts_in_poly_<last year>` | Samples sharing the polygon of the last edition. | 4.9 |
+| `n_changes_L<k>` | Number of changes when classes are compared at level k = 1 to 4. | 4.3 |
 | `interpretation` | `stable`, `change`, `near_boundary`, `flip_flop` or `insufficient_data`. | 5 |
 
 ### `interpretation`
@@ -178,7 +180,7 @@ and their interpretation category. Grid A: annual crops (`2.1.1.1`) converted to
 (`2.2.3.1`). Grid B: maritime pine (`5.1.2.1`) replaced by eucalyptus (`5.1.1.5`). Grid C: urban
 expansion (`1.0.0.0`) over pasture and cropland.*
 
-Selected rows of `<samples>_COS_<series>.csv`:
+Selected rows of `<samples>_COS_<series>_L<level>.csv`:
 
 | SAMPLE_ID | `trajectory` | `n_changes` | `stability_index` | `time_weighted_persistence` | `last_change_year` | `min_boundary_dist_m` | `interpretation` |
 |---|---|---|---|---|---|---|---|

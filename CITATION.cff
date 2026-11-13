@@ -11,6 +11,9 @@ identifiers:
     value: 10.5281/zenodo.24188122
     description: "All versions (concept DOI)"
   - type: doi
+    value: 10.5281/zenodo.24194183
+    description: "Version 0.2.0"
+  - type: doi
     value: 10.5281/zenodo.24188123
     description: "Version 0.1.0"
 repository-code: "https://github.com/PedroMMGoncalves/dgt-cos-trajectories"

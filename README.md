@@ -278,6 +278,6 @@ derived from COS1995v2, COS2007v3, COS2010v2, COS2015v2 and COS2018v2.
 
 Citation: Gonçalves, P. (2026). *dgt-cos-trajectories: land-use/land-cover history of sample points
 from the DGT COS series*. Zenodo. <https://doi.org/10.5281/zenodo.24188122> (all versions; version
-0.1.0 is <https://doi.org/10.5281/zenodo.24188123>). See also [CITATION.cff](CITATION.cff).
+0.2.0 is <https://doi.org/10.5281/zenodo.24194183>). See also [CITATION.cff](CITATION.cff).
 
 Licence: [Apache License 2.0](LICENSE).

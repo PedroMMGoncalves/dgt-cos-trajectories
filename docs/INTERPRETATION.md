@@ -1,6 +1,6 @@
 # Interpreting the results
 
-A guide to reading `samples_cos_history.csv` and the files written with it. Definitions and
+A guide to reading `<samples>_COS_<series>.csv` and the files written with it. Definitions and
 formulas are in [METHODS.md](METHODS.md).
 
 ## 1. Start with `interpretation`
@@ -74,7 +74,7 @@ as two histories:
 ## 5. A possible analysis sequence
 
 1. Open `interpretation_summary.csv`: how many samples are stable, changed, uncertain.
-2. Join `samples_cos_history.csv` to the sample table by the identifier.
+2. Join `<samples>_COS_<series>.csv` to the sample table by the identifier.
 3. Use `interpretation` as a grouping factor, keeping `stable` and `change` as the reliable groups.
 4. Within `change`, group by `trajectory` or by the first and last class.
 5. Account for shared polygons (`poly_<last year>`) when samples are treated as replicates.

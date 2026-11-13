@@ -15,6 +15,7 @@ the whole country read most of each COS layer.
 """
 import logging
 import platform
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -39,6 +40,44 @@ class RunResult:
     out_dir: Path
     history: pd.DataFrame
     selection: catalog.Selection
+    base_name: str = ""  # result tables are <base_name>.csv/.xlsx/.gpkg/.shp
+
+
+SHAPEFILE_NAMES = {  # columns longer than the 10 characters a shapefile field name allows
+    "stability_index": "stab_index",
+    "modal_persistence": "modal_pers",
+    "time_weighted_persistence": "tw_persist",
+    "last_change_year": "last_chg_y",
+    "min_boundary_dist_m": "min_bdist",
+    "near_boundary": "near_bound",
+    "interpretation": "interpret",
+}
+
+
+def output_base_name(samples_path, samples_layer, series):
+    """Base name of the result tables: ``<sample layer name>_COS_<series>``.
+
+    The sample layer name is the GeoPackage layer if one is given, otherwise
+    the file name without extension; characters other than letters, digits,
+    ``_`` and ``-`` are replaced by ``_``.
+    """
+    source = samples_layer or Path(samples_path).stem
+    source = re.sub(r"[^0-9A-Za-z_-]+", "_", source).strip("_") or "samples"
+    return f"{source}_COS_{series}"
+
+
+def shapefile_field_names(columns):
+    """``{column: field name of at most 10 characters}``, unique, in the order of ``columns``."""
+    out, used = {}, set()
+    for col in columns:
+        name = SHAPEFILE_NAMES.get(col, "pts_in_pol" if col.startswith("pts_in_poly_") else col[:10])
+        n = 1
+        while name in used:  # collision after shortening: number the last characters
+            n += 1
+            name = f"{col[:10 - len(str(n))]}{n}"
+        used.add(name)
+        out[col] = name
+    return out
 
 
 def prepare_samples(gdf, id_field, group_field=None):
@@ -259,11 +298,15 @@ def _run(cos_dir, series, samples_path, samples_layer, id_field, group_field, le
     hist.index.name = id_field
     table = hist.reset_index()
 
-    io.write_csv(table, run_dir / "samples_cos_history.csv")
+    base = output_base_name(samples_path, samples_layer, sel.series)
+    io.write_csv(table, run_dir / f"{base}.csv")
     geo = gpd.GeoDataFrame(table, geometry=samples.geometry.loc[order].values, crs=samples.crs)
-    io.write_gpkg(geo, run_dir / "samples_cos_history.gpkg", layer="samples_cos_history")
-    outputs = ["samples_cos_history.csv", "samples_cos_history.gpkg", "interpretation_summary.csv",
-               "data_dictionary.md", "run.log"]
+    io.write_gpkg(geo, run_dir / f"{base}.gpkg", layer=base)
+    shp_names = shapefile_field_names(list(table.columns))
+    io.write_shapefile(geo, run_dir / f"{base}.shp", shp_names)
+    io.write_xlsx(table, run_dir / f"{base}.xlsx")
+    outputs = [f"{base}{ext}" for ext in (".csv", ".xlsx", ".gpkg", ".shp", ".shx", ".dbf", ".prj", ".cpg")]
+    outputs += ["interpretation_summary.csv", "data_dictionary.md", "run.log"]
     for a, b2 in zip(years[:-1], years[1:]):
         tm = metrics.transition_matrix(hist[f"cls_{a}"], hist[f"cls_{b2}"])
         tm.index.name = f"{a}\\{b2}"
@@ -305,6 +348,6 @@ def _run(cos_dir, series, samples_path, samples_layer, id_field, group_field, le
         used.update(c for c in hist[f"cls_{y}"] if not pd.isna(c))
     io.write_text(run_dir / "data_dictionary.md", report.data_dictionary(
         selection=sel, cat=cat, labels=labels, level=level, id_field=id_field, group_field=group_field,
-        threshold=threshold, counts=counts, run_id=run_id, used_codes=used))
+        threshold=threshold, counts=counts, run_id=run_id, used_codes=used, shapefile_names=shp_names, base_name=base))
     log.info("done: %d samples written to %s", len(table), run_dir)
-    return RunResult(out_dir=run_dir, history=table, selection=sel)
+    return RunResult(out_dir=run_dir, history=table, selection=sel, base_name=base)

@@ -185,7 +185,8 @@ class CosTrajectories:
             try:
                 m = arcpy.mp.ArcGISProject("CURRENT").activeMap
                 if m is not None:
-                    m.addDataFromPath(os.path.join(run_dir, "samples_cos_history.gpkg",
-                                                   "main.samples_cos_history"))
+                    for name in sorted(os.listdir(run_dir)):
+                        if name.lower().endswith(".gpkg"):
+                            m.addDataFromPath(os.path.join(run_dir, name, "main." + name[:-5]))
             except Exception as e:  # noqa: BLE001 - no open project (e.g. run from Python)
                 arcpy.AddMessage(f"Result not added to a map ({e}).")

@@ -40,8 +40,9 @@ def l1(code):
 
 
 def read_history(run_dir):
-    h = pd.read_csv(Path(run_dir) / "samples_cos_history.csv", dtype=str, keep_default_na=False)
-    g = io.read_layer(Path(run_dir) / "samples_cos_history.gpkg", layer="samples_cos_history")
+    csv = sorted(Path(run_dir).glob("*_COS_*.csv"))[0]
+    h = pd.read_csv(csv, dtype=str, keep_default_na=False)
+    g = io.read_layer(csv.with_suffix(".gpkg"), layer=csv.stem)
     return h, g
 
 

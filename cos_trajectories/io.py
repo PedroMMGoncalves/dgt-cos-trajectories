@@ -83,6 +83,23 @@ def write_gpkg(gdf, path, layer):
     gdf.to_file(path, layer=layer, driver="GPKG", engine=ENGINE)
 
 
+def write_shapefile(gdf, path, field_names):
+    """Write a shapefile with the given ``{column: short name}`` mapping (UTF-8, with .cpg).
+
+    Shapefile field names are limited to 10 characters; the mapping makes the
+    shortening explicit instead of leaving it to the driver.
+    """
+    path = Path(path)
+    for ext in (".shp", ".shx", ".dbf", ".prj", ".cpg"):
+        path.with_suffix(ext).unlink(missing_ok=True)
+    gdf.rename(columns=field_names).to_file(path, driver="ESRI Shapefile", engine=ENGINE, encoding="utf-8")
+
+
+def write_xlsx(df, path, sheet_name="data"):
+    """Excel workbook with one sheet holding the table (openpyxl)."""
+    df.to_excel(path, sheet_name=sheet_name, index=False, engine="openpyxl")
+
+
 def write_csv(df, path, index=False):
     """CSV in UTF-8 with BOM so that Excel shows Portuguese labels correctly."""
     df.to_csv(path, index=index, encoding="utf-8-sig", lineterminator="\n")

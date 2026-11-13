@@ -54,7 +54,7 @@ Notes:
 ### Requirements
 
 The default ArcGIS Pro Python environment (`arcgispro-py3`: Python 3.13, geopandas, shapely, fiona,
-pandas, numpy, pyproj) with no additional package. Outside ArcGIS,
+pandas, numpy, pyproj, openpyxl) with no additional package. Outside ArcGIS,
 `conda env create -f environment.yml` gives an equivalent environment.
 
 ### Data
@@ -102,12 +102,15 @@ level, fewer than two editions) stops the run with a message; exit code 2.
 
 ## 3. Outputs
 
-Written to `<output folder>/<run id>/`:
+Written to `<output folder>/<run id>/`. `<samples>` is the name of the sample layer and `<series>`
+is `S1` or `S2`, for example `plots_COS_S1.shp`:
 
 | File | Content |
 |---|---|
-| `samples_cos_history.csv` | One row per sample. |
-| `samples_cos_history.gpkg` | Same table with point geometry (EPSG:3763). |
+| `<samples>_COS_<series>.xlsx` | One row per sample (Excel). |
+| `<samples>_COS_<series>.csv` | Same table as text (UTF-8). |
+| `<samples>_COS_<series>.gpkg` | Same table with point geometry (EPSG:3763); full field names. |
+| `<samples>_COS_<series>.shp` | Same table as a shapefile; field names shortened to 10 characters (listed in `data_dictionary.md`). |
 | `interpretation_summary.csv` | Number and share of samples per interpretation category. |
 | `transitions_<a>_<b>.csv` | Samples per class in edition `a` (rows) and edition `b` (columns), consecutive editions. |
 | `group_summary.csv` | One row per group, if a group field is given. |
@@ -115,7 +118,7 @@ Written to `<output folder>/<run id>/`:
 | `manifest.json` | Parameters, input files with SHA-256, software versions, counts. |
 | `run.log` | Processing messages. |
 
-### Fields of `samples_cos_history`
+### Fields of `<samples>_COS_<series>`
 
 `<year>` is each edition year of the trajectory. Formulas: [docs/METHODS.md](docs/METHODS.md).
 
@@ -175,7 +178,7 @@ and their interpretation category. Grid A: annual crops (`2.1.1.1`) converted to
 (`2.2.3.1`). Grid B: maritime pine (`5.1.2.1`) replaced by eucalyptus (`5.1.1.5`). Grid C: urban
 expansion (`1.0.0.0`) over pasture and cropland.*
 
-Selected rows of `samples_cos_history.csv`:
+Selected rows of `<samples>_COS_<series>.csv`:
 
 | SAMPLE_ID | `trajectory` | `n_changes` | `stability_index` | `time_weighted_persistence` | `last_change_year` | `min_boundary_dist_m` | `interpretation` |
 |---|---|---|---|---|---|---|---|

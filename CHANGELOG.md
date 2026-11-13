@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 (2026-11-13)
+
+- Result table also written as a shapefile and as an Excel workbook.
+- Result tables named after the sample layer and the series: `<samples>_COS_<series>`
+  (`.xlsx`, `.csv`, `.gpkg`, `.shp`). Shapefile field names are shortened to 10 characters
+  with a fixed mapping, listed in the data dictionary.
+- Affiliation, DOI and badges added to the metadata and README.
+
 ## 0.1.0 (2026-11-13)
 
 First release.

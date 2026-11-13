@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "dgt-cos-trajectories: land-use/land-cover history of sample points from the DGT COS series"
 type: software
-version: 0.1.0
+version: 0.2.0
 date-released: 2026-11-13
 license: Apache-2.0
 doi: 10.5281/zenodo.24188122

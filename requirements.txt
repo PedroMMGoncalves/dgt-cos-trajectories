@@ -6,5 +6,6 @@ fiona==1.10.1
 pandas==3.0.0
 numpy==2.3.5
 pyproj
+openpyxl
 # tests
 pytest

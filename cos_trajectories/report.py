@@ -64,7 +64,7 @@ def _table(header, rows):
 
 
 def data_dictionary(selection, cat, labels, level, id_field, group_field, threshold, counts, run_id,
-                    used_codes):
+                    used_codes, shapefile_names=None, base_name="samples_cos_history"):
     sel = selection
     years = sel.years
     last = years[-1]
@@ -112,9 +112,13 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
             f"- `{s.path.name}`: {r}" for s, r in sel.excluded))
 
     out += ["## Files", _table(["File", "Content"], [
-        ["`samples_cos_history.csv`", "Main table, one row per sample. UTF-8; opens in Excel."],
-        ["`samples_cos_history.gpkg`", "Same table with the sample points (GIS format, "
-                                       "EPSG:3763 PT-TM06/ETRS89)."],
+        ["`samples_cos_history.xlsx`", "Main table, one row per sample (Excel)."],
+        ["`samples_cos_history.csv`", "Same table as text (UTF-8)."],
+        ["`samples_cos_history.gpkg`", "Same table with the sample points (GeoPackage, "
+                                       "EPSG:3763 PT-TM06/ETRS89). Full column names."],
+        ["`samples_cos_history.shp`", "Same table with the sample points (shapefile, with `.shx`, `.dbf`, "
+                                      "`.prj`, `.cpg`). Column names shortened to 10 characters; see "
+                                      "“Shapefile field names”."],
         ["`interpretation_summary.csv`", "Number and share of samples in each `interpretation` category."],
         ["`transitions_<a>_<b>.csv`", "Number of samples going from each class in edition a (rows) to "
                                       "each class in edition b (columns), for consecutive editions. "
@@ -162,6 +166,13 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
             "Metrics use only the *observed* editions (those where the point falls in a COS polygon). "
             "With fewer than two observed editions the change-based metrics are empty. No composite "
             "index is given: each metric answers a different question."]
+    if shapefile_names:
+        short = [[f"`{k}`", f"`{v}`"] for k, v in shapefile_names.items() if k != v]
+        out += ["## Shapefile field names",
+                "A shapefile allows field names of at most 10 characters. Columns not listed keep their name. "
+                "Empty numeric values may be shown as 0 by some programs when reading the shapefile; the "
+                "Excel, CSV and GeoPackage files keep them empty.",
+                _table(["Column", "Shapefile field"], short)]
     if group_field:
         out += [f"## Columns of `group_summary.csv` (one row per `{group_field}`)", _table(
             ["Column", "Meaning"], [
@@ -203,7 +214,7 @@ def data_dictionary(selection, cat, labels, level, id_field, group_field, thresh
 
     noms = sorted({s.product["nomenclature"] for s in sel.sources})
     out += ["## Sources", "\n".join(f"- {k}: {cat['nomenclatures'][k]['source']}" for k in noms)]
-    return "\n\n".join(p for p in out if p) + "\n"
+    return ("\n\n".join(p for p in out if p) + "\n").replace("samples_cos_history", base_name)
 
 
 def _limitations(selection, cat):

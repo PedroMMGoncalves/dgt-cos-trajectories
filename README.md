@@ -1,5 +1,14 @@
 <p align="center"><img src="docs/img/logo.png" alt="dgt-cos-trajectories logo" width="180"></p>
 
+<p align="center">
+  <a href="https://doi.org/10.5281/zenodo.24188122"><img src="https://zenodo.org/badge/1455779643.svg" alt="DOI"></a>
+  <a href="https://github.com/PedroMMGoncalves/dgt-cos-trajectories/releases/latest"><img src="https://img.shields.io/github/v/release/PedroMMGoncalves/dgt-cos-trajectories" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/PedroMMGoncalves/dgt-cos-trajectories" alt="Licence: Apache-2.0"></a>
+  <img src="https://img.shields.io/badge/python-3.13-blue" alt="Python 3.13">
+  <img src="https://img.shields.io/badge/ArcGIS%20Pro-toolbox-2c7ac3" alt="ArcGIS Pro toolbox">
+  <img src="https://img.shields.io/badge/data-DGT%20COS-4c9a2a" alt="Data: DGT COS">
+</p>
+
 # dgt-cos-trajectories
 
 Land-use/land-cover history of point samples from the *Carta de Uso e Ocupação do Solo* (COS) of
@@ -262,4 +271,8 @@ The literature behind each formula is listed in [docs/METHODS.md](docs/METHODS.m
 COS data © Direção-Geral do Território; not distributed with this repository. The figures are
 derived from COS1995v2, COS2007v3, COS2010v2, COS2015v2 and COS2018v2.
 
-Citation: [CITATION.cff](CITATION.cff). Licence: [Apache License 2.0](LICENSE).
+Citation: Gonçalves, P. (2026). *dgt-cos-trajectories: land-use/land-cover history of sample points
+from the DGT COS series*. Zenodo. <https://doi.org/10.5281/zenodo.24188122> (all versions; version
+0.1.0 is <https://doi.org/10.5281/zenodo.24188123>). See also [CITATION.cff](CITATION.cff).
+
+Licence: [Apache License 2.0](LICENSE).
